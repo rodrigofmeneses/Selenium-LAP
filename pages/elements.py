@@ -23,96 +23,132 @@ class Planejamento(PageElement):
 
 
 class Terceirizados(PageElement):
-
-    loc_funcionarios = (By.CSS_SELECTOR, 'tbody > tr')
-
-    def funcionarios_cadastrados(self):
-        funcionarios = self.find_elements(self.loc_funcionarios)
-
-        po_funcionarios = []
-        for funcionario in funcionarios:
-            po_funcionarios.append(Funcionario(funcionario))
-
-        return po_funcionarios
+    _tabela_terceirizados_locator = (By.CSS_SELECTOR, 'tbody > tr')
+    funcionarios = []
 
 
-class DemaisInformacoes(PageElement):
-    ...
+    def _funcionarios_cadastrados(self):
+        num_funcs = len(self.find_elements(self._tabela_terceirizados_locator))
+        po_funcs = []
+        for n in range(1, num_funcs + 1):
+            po_funcs.append(Funcionario(
+                self.webdriver,
+                (By.CSS_SELECTOR, f'tbody > tr:nth-child({n})')
+            ))
+        return po_funcs
+
+    def carregar_funcionarios(self):
+        self.funcionarios = self._funcionarios_cadastrados()
 
 
-class Funcionario():
-    def __init__(self, selenium_object):
+class ClickAgent():
+    def inserir(self, locator, valor):
+        # uma grande pegadinha é que esse locator é a partir do elemento
+        # e não da página.
+        elemento = self.find_element(locator)
+        # Se o valor tem uma casa decimal, deve inserir de maneira diferente,
+        # com um 0 extra, pois 3.20 se torna 0.32
+        if len(str(valor).split('.')[-1]) == 1:
+            if valor < 0:
+                self._inserir_com_modificador_final(elemento, valor, '0-')
+            else:
+                self._inserir_com_modificador_final(elemento, valor, '0')
+        else:
+            if valor < 0:
+                self._inserir_com_modificador_final(elemento, valor, '-')
+            else:
+                self._inserir_com_modificador_final(elemento, valor)
+
+    def _inserir_com_modificador_final(self, elemento, valor, modificador=''):
+        elemento.clear()
+        elemento.send_keys(
+            f"0{str(valor)}{modificador}"
+        )
+
+    def clicar(self, locator):
+        self.find_element(locator).click()
+
+
+class Funcionario(PageElement, ClickAgent):
+    def __init__(self, webdriver, locator):
         """
         Funcionario contem as informações do Terceirizados.
         selenium_object: objeto te a linha na tabela a qual
         o funcionario pertence.
+
+        Funcionário é dinâmico, sempre que mexer em algo, tem que atualizar.
         """
-        self.selenium_object = selenium_object
+        self.webdriver = webdriver
+        self._locator = locator
         # Informações
         self.nome = (By.CSS_SELECTOR, 'div > span')
         self.cpf = (By.CSS_SELECTOR, 'span > span')
-        self.dias_trabalhados = None
-        self.salario_base = None
-        self.salario_total = None
-        # Elementos
+        self.dias_trabalhados = (By.CSS_SELECTOR, 'td:nth-child(6) input')
+        self.salario_base = (By.CSS_SELECTOR, 'td:nth-child(7) input')
+        self.salario_total = (By.CSS_SELECTOR, 'td:nth-child(13) input')
+        # Seletores
+        self._nome = self.nome
+        self._cpf = self.cpf
         self._dias_trabalhados = self.dias_trabalhados
         self._salario_base = self.salario_base
+        self._salario_total = self.salario_total
         self._demais_informacoes = (By.CSS_SELECTOR, 'button')
+        # Atualizar o webdriver para o elemento
+        self.webdriver = self.find_element(
+            self._locator
+        )
+        self._load()
+
+    def modificar_dias_trabalhados(self, valor):
+        modificar(self._dias_trabalhados, valor)
+
+    def modificar_salario_base(self, valor):
+        modificar(self._salario_base, valor)
+
+    def modificar(self, locator, valor):
+        self.inserir(locator, valor)
+        self.clicar(self._nome)
+        sleep(3)
         self._load()
 
     def demais_informacoes(self):
-        self.selenium_object.find_element(*self._demais_informacoes).click()
-
-    def modificar_dias_trabalhados(self, dias):
-        ...
-
-    def modificar_salario_base(self, salario):
-        ...
+        self.find_element(self._demais_informacoes).click()
+        return DemaisInformacoes(self.webdriver, self.cpf)
 
     def _load(self):
-        self.nome = self.selenium_object.find_element(
-            *self.nome
-        ).text
+        self.nome = self._load_text(self._nome)
+        self.cpf = self._load_text(self._cpf)
+        self.dias_trabalhados = self._load_atrib_value(self._dias_trabalhados)
+        self.salario_base = self._load_atrib_value(self._salario_base)
+        self.salario_total = self._load_atrib_value(self._salario_total)
 
-        self.cpf = self.selenium_object.find_element(
-            *self.cpf
-        ).text
+    def _load_text(self, locator):
+        return self.find_element(locator).text
 
-        # inputs
-        inputs = (By.CSS_SELECTOR, 'input')
-
-        # dias trabalhados
-        input_elements = self.selenium_object.find_elements(
-            *inputs
-        )
-
-        self.dias_trabalhados = input_elements[0].get_attribute('value')
-        self.dias_trabalhados = float(
-            self.dias_trabalhados.replace('.', '').replace(',', '.')
-        )
-        # elemento clicável
-        self._dias_trabalhados = input_elements[0]
-
-        # salario base
-        self.salario_base = input_elements[1].get_attribute('value')
-        self.salario_base = float(
-            self.salario_base.replace('.', '').replace(',', '.')
-        )
-        # elemento clicável
-        self._salario_base = input_elements[1]
-
-        # salario total
-        self.salario_total = input_elements[7].get_attribute('value')
-        self.salario_total = float(
-            self.salario_total.replace('.', '').replace(',', '.')
-        )
+    def _load_atrib_value(self, locator):
+        text = self.find_element(locator).get_attribute('value')
+        return float(text.replace('.', '').replace(',', '.'))
 
     def __repr__(self):
-        return "ALOOOOO"
-        # return f'Funcionario(nome="{self.nome}"", cpf="{self.cpf}")'
+        return f'Funcionario(nome="{self.nome}"", cpf="{self.cpf}")'
 
+class DemaisInformacoes(PageElement, ClickAgent):
+    def __init__(self, webdriver, cpf):
+        self.webdriver = webdriver
+        self.cpf = cpf
+        self.montanteA = (By.CSS_SELECTOR, '')
+        self.montanteB = (By.CSS_SELECTOR, '')
+        self.montanteC = (By.CSS_SELECTOR, '')
+        self.provisionamento = (By.CSS_SELECTOR, '')
 
-class SpecialInput():
+    def preencher_montante_A():
+        ...
 
-    def input(elemento, novo_valor):
+    def preencher_montante_B():
+        ...
+
+    def preencher_montante_C():
+        ...
+
+    def preencher_provisionamento():
         ...
