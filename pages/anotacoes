@@ -1,0 +1,25 @@
+Montante A
+  dados = [
+  Valor Adicional, Valor Adicional Noturno,
+  Valor Reserva Técnica, Valor Encargos, Valor Insalubridade,
+  Valor Periculosidade, Valor Outros
+  ]
+  Montante B
+  dados = [
+  Valor Vale Transporte, Valor Vale Refeição, Valor Taxa,
+  Valor Cesta Basica, Valor Farda, Valor Munição, Valor Seguro Vida,
+  Valor Supervisão, Valor Intra jornada Diurno,
+  Valor Intra jornada Noturno, Valor Tributos,
+  Valor Insumos de Mão de Obra
+  ]
+  Montante C
+  dados = [
+  Valor Equipamento, Valor Plano Saúde
+  ]
+  Provisionamento
+  dados = [
+  Quantidade Hora Extra, Valor Hora Extra, Valor DSR,
+  Valor Extra Encargos, Valor Extra Taxa, Valor Extra, Tributos,
+  Quantidade Diarias, Valor Passagem, Valor Viagem,
+  Valor Viagem taxa, Valor Viagem Tributos
+  ]

@@ -30,10 +30,11 @@ class Terceirizados(PageElement):
     def _funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self._tabela_terceirizados_locator))
         po_funcs = []
-        for n in range(1, num_funcs + 1):
+        f_locator = 'tbody > tr:nth-child({i})'
+        for i in range(1, num_funcs + 1):
             po_funcs.append(Funcionario(
                 self.webdriver,
-                (By.CSS_SELECTOR, f'tbody > tr:nth-child({n})')
+                (By.CSS_SELECTOR, f_locator.format(i=i))
             ))
         return po_funcs
 
@@ -42,24 +43,24 @@ class Terceirizados(PageElement):
 
 
 class ClickAgent():
-    def inserir(self, locator, valor):
+    def digitar(self, locator, valor):
         # uma grande pegadinha é que esse locator é a partir do elemento
         # e não da página.
         elemento = self.find_element(locator)
-        # Se o valor tem uma casa decimal, deve inserir de maneira diferente,
+        # Se o valor tem uma casa decimal, deve digitar de maneira diferente,
         # com um 0 extra, pois 3.20 se torna 0.32
         if len(str(valor).split('.')[-1]) == 1:
             if valor < 0:
-                self._inserir_com_modificador_final(elemento, valor, '0-')
+                self._digitar_com_modificador_final(elemento, valor, '0-')
             else:
-                self._inserir_com_modificador_final(elemento, valor, '0')
+                self._digitar_com_modificador_final(elemento, valor, '0')
         else:
             if valor < 0:
-                self._inserir_com_modificador_final(elemento, valor, '-')
+                self._digitar_com_modificador_final(elemento, valor, '-')
             else:
-                self._inserir_com_modificador_final(elemento, valor)
+                self._digitar_com_modificador_final(elemento, valor)
 
-    def _inserir_com_modificador_final(self, elemento, valor, modificador=''):
+    def _digitar_com_modificador_final(self, elemento, valor, modificador=''):
         elemento.clear()
         elemento.send_keys(
             f"0{str(valor)}{modificador}"
@@ -70,7 +71,7 @@ class ClickAgent():
 
 
 class Funcionario(PageElement, ClickAgent):
-    def __init__(self, webdriver, locator):
+    def __init__(self, webdriver, loc_funcionario):
         """
         Funcionario contem as informações do Terceirizados.
         selenium_object: objeto te a linha na tabela a qual
@@ -79,48 +80,53 @@ class Funcionario(PageElement, ClickAgent):
         Funcionário é dinâmico, sempre que mexer em algo, tem que atualizar.
         """
         self.webdriver = webdriver
-        self._locator = locator
         # Informações
         self.nome = (By.CSS_SELECTOR, 'div > span')
         self.cpf = (By.CSS_SELECTOR, 'span > span')
         self.dias_trabalhados = (By.CSS_SELECTOR, 'td:nth-child(6) input')
         self.salario_base = (By.CSS_SELECTOR, 'td:nth-child(7) input')
         self.salario_total = (By.CSS_SELECTOR, 'td:nth-child(13) input')
+        self.demais_informacoes = (By.CSS_SELECTOR, 'button')
         # Seletores
-        self._nome = self.nome
-        self._cpf = self.cpf
-        self._dias_trabalhados = self.dias_trabalhados
-        self._salario_base = self.salario_base
-        self._salario_total = self.salario_total
-        self._demais_informacoes = (By.CSS_SELECTOR, 'button')
+        self.loc_funcionario = loc_funcionario
+        self.loc_nome = self.nome
+        self.loc_cpf = self.cpf
+        self.loc_dias_trabalhados = self.dias_trabalhados
+        self.loc_salario_base = self.salario_base
+        self.loc_salario_total = self.salario_total
+        self.loc_demais_informacoes = self.demais_informacoes
         # Atualizar o webdriver para o elemento
         self.webdriver = self.find_element(
-            self._locator
+            self.loc_funcionario
         )
         self._load()
 
-    def modificar_dias_trabalhados(self, valor):
-        modificar(self._dias_trabalhados, valor)
+    def modificarloc_dias_trabalhados(self, valor):
+        modificar(self.loc_dias_trabalhados, valor)
 
-    def modificar_salario_base(self, valor):
-        modificar(self._salario_base, valor)
+    def modificarloc_salario_base(self, valor):
+        modificar(self.loc_salario_base, valor)
 
     def modificar(self, locator, valor):
-        self.inserir(locator, valor)
-        self.clicar(self._nome)
+        self.digitar(locator, valor)
+        self.clicar(self.loc_nome)
+        # Logo logo botar um wait aqui!
         sleep(3)
         self._load()
 
-    def demais_informacoes(self):
-        self.find_element(self._demais_informacoes).click()
-        return DemaisInformacoes(self.webdriver, self.cpf)
+    def clicar_demais_informacoes(self):
+        self.find_element(self.loc_demais_informacoes).click()
+        self.demais_informacoes = DemaisInformacoes(
+            self.webdriver,
+            self.cpf
+        )
 
     def _load(self):
-        self.nome = self._load_text(self._nome)
-        self.cpf = self._load_text(self._cpf)
-        self.dias_trabalhados = self._load_atrib_value(self._dias_trabalhados)
-        self.salario_base = self._load_atrib_value(self._salario_base)
-        self.salario_total = self._load_atrib_value(self._salario_total)
+        self.nome = self._load_text(self.loc_nome)
+        self.cpf = self._load_text(self.loc_cpf)
+        self.dias_trabalhados = self._load_atrib_value(self.loc_dias_trabalhados)
+        self.salario_base = self._load_atrib_value(self.loc_salario_base)
+        self.salario_total = self._load_atrib_value(self.loc_salario_total)
 
     def _load_text(self, locator):
         return self.find_element(locator).text
@@ -130,25 +136,43 @@ class Funcionario(PageElement, ClickAgent):
         return float(text.replace('.', '').replace(',', '.'))
 
     def __repr__(self):
-        return f'Funcionario(nome="{self.nome}"", cpf="{self.cpf}")'
+        return f'Funcionario(nome="{self.nome}"', cpf="{self.cpf}")'
+
 
 class DemaisInformacoes(PageElement, ClickAgent):
-    def __init__(self, webdriver, cpf):
+    def __init__(self, webdriver, cpf=''):
         self.webdriver = webdriver
         self.cpf = cpf
-        self.montanteA = (By.CSS_SELECTOR, '')
-        self.montanteB = (By.CSS_SELECTOR, '')
-        self.montanteC = (By.CSS_SELECTOR, '')
-        self.provisionamento = (By.CSS_SELECTOR, '')
+        self.montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1)  tbody')
+        self.montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2)  tbody')
+        self.montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3)  tbody')
+        self.provisionamento_hora_extra = (
+            By.CSS_SELECTOR,
+            'tab.tab-pane:nth-child(4) > table:nth-child(1) > tbody'
+        )
+        self.provisionamento_viagem = (
+            By.CSS_SELECTOR,
+            'tab.tab-pane:nth-child(4) > table:nth-child(2) > tbody'
+        )
 
-    def preencher_montante_A():
-        ...
+    def preencher(self, loc_tabela, dados):
+        loc_inputs = self.listar_inputs(loc_tabela)
+        value = dados
+        for loc_input, value in zip(loc_inputs, dados):
+            self.digitar(loc_input, value)
 
-    def preencher_montante_B():
-        ...
+    def listar_loc_inputs(self, loc_tabela):
+        complemento = ' input'
+        num_inputs = len(self.find_elements(
+            (loc_tabela[0, loc_tabela[1] + complemento)
+        )
+        complemento = ' > tr:nth-child({i}) input'
+        loc_inputs = []
+        for i in range(1:num_inputs):
+            loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i=i))
+            if input_modificavel(loc_input):
+                loc_inputs.append(loc_input)
+        return loc_inputs
 
-    def preencher_montante_C():
-        ...
-
-    def preencher_provisionamento():
-        ...
+    def input_modificavel(self, locator):
+        return not bool(self.find_element(locator).get_attribute('readonly'))

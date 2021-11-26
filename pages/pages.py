@@ -12,4 +12,3 @@ class PageGuardiao(Page):
 
 class PageFatura(Page):
     terceirizados = Terceirizados()
-    demais_informacoes = DemaisInformacoes()
