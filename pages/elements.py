@@ -23,12 +23,12 @@ class Planejamento(PageElement):
 
 
 class Terceirizados(PageElement):
-    _tabela_terceirizados_locator = (By.CSS_SELECTOR, 'tbody > tr')
+    loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
 
 
     def _funcionarios_cadastrados(self):
-        num_funcs = len(self.find_elements(self._tabela_terceirizados_locator))
+        num_funcs = len(self.find_elements(self.loc_tabela_terceirizados))
         po_funcs = []
         f_locator = 'tbody > tr:nth-child({i})'
         for i in range(1, num_funcs + 1):
@@ -80,6 +80,7 @@ class Funcionario(PageElement, ClickAgent):
         Funcionário é dinâmico, sempre que mexer em algo, tem que atualizar.
         """
         self.webdriver = webdriver
+        self.page_webdriver = webdriver
         # Informações
         self.nome = (By.CSS_SELECTOR, 'div > span')
         self.cpf = (By.CSS_SELECTOR, 'span > span')
@@ -101,10 +102,10 @@ class Funcionario(PageElement, ClickAgent):
         )
         self._load()
 
-    def modificarloc_dias_trabalhados(self, valor):
+    def modificar_dias_trabalhados(self, valor):
         modificar(self.loc_dias_trabalhados, valor)
 
-    def modificarloc_salario_base(self, valor):
+    def modificar_salario_base(self, valor):
         modificar(self.loc_salario_base, valor)
 
     def modificar(self, locator, valor):
@@ -117,7 +118,7 @@ class Funcionario(PageElement, ClickAgent):
     def clicar_demais_informacoes(self):
         self.find_element(self.loc_demais_informacoes).click()
         self.demais_informacoes = DemaisInformacoes(
-            self.webdriver,
+            self.page_webdriver,
             self.cpf
         )
 
@@ -136,16 +137,16 @@ class Funcionario(PageElement, ClickAgent):
         return float(text.replace('.', '').replace(',', '.'))
 
     def __repr__(self):
-        return f'Funcionario(nome="{self.nome}"', cpf="{self.cpf}")'
+        return f'Funcionario(nome="{self.nome}", cpf="{self.cpf}")'
 
 
 class DemaisInformacoes(PageElement, ClickAgent):
     def __init__(self, webdriver, cpf=''):
         self.webdriver = webdriver
         self.cpf = cpf
-        self.montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1)  tbody')
-        self.montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2)  tbody')
-        self.montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3)  tbody')
+        self.montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
+        self.montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
+        self.montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
         self.provisionamento_hora_extra = (
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(1) > tbody'
@@ -156,21 +157,20 @@ class DemaisInformacoes(PageElement, ClickAgent):
         )
 
     def preencher(self, loc_tabela, dados):
-        loc_inputs = self.listar_inputs(loc_tabela)
-        value = dados
+        loc_inputs = self.listar_loc_inputs(loc_tabela)
         for loc_input, value in zip(loc_inputs, dados):
             self.digitar(loc_input, value)
 
     def listar_loc_inputs(self, loc_tabela):
         complemento = ' input'
         num_inputs = len(self.find_elements(
-            (loc_tabela[0, loc_tabela[1] + complemento)
-        )
+            (loc_tabela[0], loc_tabela[1] + complemento)
+        ))
         complemento = ' > tr:nth-child({i}) input'
         loc_inputs = []
-        for i in range(1:num_inputs):
+        for i in range(1, num_inputs + 1):
             loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i=i))
-            if input_modificavel(loc_input):
+            if self.input_modificavel(loc_input):
                 loc_inputs.append(loc_input)
         return loc_inputs
 
