@@ -2,6 +2,7 @@
 from selenium.webdriver.common.by import By
 # from selenium.common.exceptions import NoSuchElementException
 from page_objects import PageElement
+from time import sleep
 
 
 class Login(PageElement):
@@ -30,11 +31,11 @@ class Terceirizados(PageElement):
     def _funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self.loc_tabela_terceirizados))
         po_funcs = []
-        f_locator = 'tbody > tr:nth-child({i})'
+        loc_funcionario = 'tbody > tr:nth-child({})'
         for i in range(1, num_funcs + 1):
             po_funcs.append(Funcionario(
                 self.webdriver,
-                (By.CSS_SELECTOR, f_locator.format(i=i))
+                (By.CSS_SELECTOR, loc_funcionario.format(i))
             ))
         return po_funcs
 
@@ -80,14 +81,25 @@ class Funcionario(PageElement, ClickAgent):
         Funcionário é dinâmico, sempre que mexer em algo, tem que atualizar.
         """
         self.webdriver = webdriver
-        self.page_webdriver = webdriver
         # Informações
-        self.nome = (By.CSS_SELECTOR, 'div > span')
-        self.cpf = (By.CSS_SELECTOR, 'span > span')
-        self.dias_trabalhados = (By.CSS_SELECTOR, 'td:nth-child(6) input')
-        self.salario_base = (By.CSS_SELECTOR, 'td:nth-child(7) input')
-        self.salario_total = (By.CSS_SELECTOR, 'td:nth-child(13) input')
-        self.demais_informacoes = (By.CSS_SELECTOR, 'button')
+        self.nome = (By.CSS_SELECTOR, loc_funcionario[1] + ' ' + 'div > span')
+        self.cpf = (By.CSS_SELECTOR, loc_funcionario[1] + ' ' + 'span > span')
+        self.dias_trabalhados = (
+            By.CSS_SELECTOR,
+            loc_funcionario[1] + ' ' + 'td:nth-child(6) input'
+        )
+        self.salario_base = (
+            By.CSS_SELECTOR,
+            loc_funcionario[1] + ' ' + 'td:nth-child(7) input'
+        )
+        self.salario_total = (
+            By.CSS_SELECTOR,
+            loc_funcionario[1] + ' ' + 'td:nth-child(13) input'
+        )
+        self.demais_informacoes = (
+            By.CSS_SELECTOR,
+            loc_funcionario[1] + ' ' + 'button'
+        )
         # Seletores
         self.loc_funcionario = loc_funcionario
         self.loc_nome = self.nome
@@ -96,19 +108,16 @@ class Funcionario(PageElement, ClickAgent):
         self.loc_salario_base = self.salario_base
         self.loc_salario_total = self.salario_total
         self.loc_demais_informacoes = self.demais_informacoes
-        # Atualizar o webdriver para o elemento
-        self.webdriver = self.find_element(
-            self.loc_funcionario
-        )
+
         self._load()
 
     def modificar_dias_trabalhados(self, valor):
-        modificar(self.loc_dias_trabalhados, valor)
+        self._modificar(self.loc_dias_trabalhados, valor)
 
     def modificar_salario_base(self, valor):
-        modificar(self.loc_salario_base, valor)
+        self._modificar(self.loc_salario_base, valor)
 
-    def modificar(self, locator, valor):
+    def _modificar(self, locator, valor):
         self.digitar(locator, valor)
         self.clicar(self.loc_nome)
         # Logo logo botar um wait aqui!
@@ -117,10 +126,7 @@ class Funcionario(PageElement, ClickAgent):
 
     def clicar_demais_informacoes(self):
         self.find_element(self.loc_demais_informacoes).click()
-        self.demais_informacoes = DemaisInformacoes(
-            self.page_webdriver,
-            self.cpf
-        )
+        self.demais_informacoes = DemaisInformacoes(self.webdriver)
 
     def _load(self):
         self.nome = self._load_text(self.loc_nome)
@@ -141,9 +147,8 @@ class Funcionario(PageElement, ClickAgent):
 
 
 class DemaisInformacoes(PageElement, ClickAgent):
-    def __init__(self, webdriver, cpf=''):
+    def __init__(self, webdriver):
         self.webdriver = webdriver
-        self.cpf = cpf
         self.montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
         self.montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
         self.montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
@@ -161,18 +166,18 @@ class DemaisInformacoes(PageElement, ClickAgent):
         for loc_input, value in zip(loc_inputs, dados):
             self.digitar(loc_input, value)
 
-    def listar_loc_inputs(self, loc_tabela):
-        complemento = ' input'
+    def _listar_loc_inputs(self, loc_tabela):
+        complemento = ' ' + 'input'
         num_inputs = len(self.find_elements(
             (loc_tabela[0], loc_tabela[1] + complemento)
         ))
-        complemento = ' > tr:nth-child({i}) input'
+        complemento = ' ' + '> tr:nth-child({}) input'
         loc_inputs = []
         for i in range(1, num_inputs + 1):
-            loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i=i))
-            if self.input_modificavel(loc_input):
+            loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i))
+            if self._input_modificavel(loc_input):
                 loc_inputs.append(loc_input)
         return loc_inputs
 
-    def input_modificavel(self, locator):
+    def _input_modificavel(self, locator):
         return not bool(self.find_element(locator).get_attribute('readonly'))
