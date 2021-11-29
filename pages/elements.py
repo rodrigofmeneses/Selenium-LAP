@@ -10,16 +10,22 @@ class Login(PageElement):
     loc_password = (By.ID, 'password')
     loc_submit = (By.CSS_SELECTOR, '[type="submit"]')
 
-    def logar(self, usuario, senha):
-        self.find_element(self.loc_login).send_keys(usuario)
-        self.find_element(self.loc_password).send_keys(senha)
+    def logar(self, credenciais):
+        self.ler_credenciais(credenciais)
+        self.find_element(self.loc_login).send_keys(self.usuario)
+        self.find_element(self.loc_password).send_keys(self.senha)
         self._clicar(self.loc_submit)
+    
+    def ler_credenciais(self, credenciais):
+        with open(credenciais) as f:
+            self.usuario = f.readline()
+            self.senha = f.readline()
 
 
 class Planejamento(PageElement):
     spg_button = (By.CSS_SELECTOR, 'glo-element-block.ng-tns-c37-10')
 
-    def acessarSpg(self):
+    def acessar_spg(self):
         try:
             botao = WebDriverWait(self.webdriver, 10).until(
                 expected_conditions.presence_of_element_located(
