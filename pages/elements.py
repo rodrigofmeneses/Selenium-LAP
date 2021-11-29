@@ -1,27 +1,82 @@
-# from abc import ABC
 from selenium.webdriver.common.by import By
-# from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
 from page_objects import PageElement
 from time import sleep
 
 
 class Login(PageElement):
-    login_input = (By.ID, 'user-name')
-    password_input = (By.ID, 'password')
-    submit_button = (By.CSS_SELECTOR, '[type="submit"]')
+    loc_login = (By.ID, 'user-name')
+    loc_password = (By.ID, 'password')
+    loc_submit = (By.CSS_SELECTOR, '[type="submit"]')
 
     def logar(self, usuario, senha):
-        self.find_element(self.login_input).send_keys(usuario)
-        self.find_element(self.password_input).send_keys(senha)
-        self.find_element(self.submit_button).click()
+        self.find_element(self.loc_login).send_keys(usuario)
+        self.find_element(self.loc_password).send_keys(senha)
+        self._clicar(self.loc_submit)
 
 
 class Planejamento(PageElement):
-    spg_button = (By.CSS_SELECTOR, '.ng-tns-c37-10')
+    spg_button = (By.CSS_SELECTOR, 'glo-element-block.ng-tns-c37-10')
 
     def acessarSpg(self):
-        self.find_element(self.spg_button).click()
+        try:
+            botao = WebDriverWait(self.webdriver, 10).until(
+                expected_conditions.presence_of_element_located(
+                    self.spg_button
+                )
+            )
+        finally:
+            # self._clicar(self.spg_button)
+            self._clicar(self.spg_button)
 
+
+class MenuSuperior(PageElement):
+    sister_button = (By.CSS_SELECTOR, 'li:nth-child(6) > a.menu')
+    
+    def clicar_sister(self):
+        try:
+            botao = WebDriverWait(self.webdriver, 10).until(
+                expected_conditions.presence_of_element_located(
+                    self.sister_button
+                )
+            )
+        finally:
+            sleep(1)
+            self._clicar(self.sister_button)
+
+
+class MenuLateral(PageElement):
+    fatura_button = (
+        By.CSS_SELECTOR, 
+        'ul:nth-child(1) > li:nth-child(7) > a:nth-child(1)'
+    )
+    controle_de_fatura_button = (
+        By.CSS_SELECTOR, 
+        'li.active:nth-child(7) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)'
+    )
+
+    def clicar_fatura(self):
+        self._clicar(self.fatura_button)
+    
+    def clicar_controle_de_fatura(self):
+        self._clicar(self.controle_de_fatura_button)
+
+
+class Avisos(PageElement):
+    close_button = (By.CSS_SELECTOR, 'button.close')
+
+    def fechar_avisos(self):
+        sleep(2)
+        num_avisos = len(self.find_elements(self.close_button))
+        for _ in range(num_avisos):
+            for button in self.find_elements(self.close_button):
+                try: 
+                    button.click()
+                except:
+                    ...
+            sleep(0.2)
+        sleep(1)
 
 class Terceirizados(PageElement):
     loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
@@ -43,7 +98,7 @@ class Terceirizados(PageElement):
         self.funcionarios = self._funcionarios_cadastrados()
 
 
-class ClickAgent():
+class TypeAgent():
     def _digitar(self, locator, valor):
         # uma grande pegadinha é que esse locator é a partir do elemento
         # e não da página.
@@ -67,11 +122,8 @@ class ClickAgent():
             f"0{str(valor)}{modificador}"
         )
 
-    def _clicar(self, locator):
-        self.find_element(locator).click()
 
-
-class Funcionario(PageElement, ClickAgent):
+class Funcionario(PageElement, TypeAgent):
     def __init__(self, webdriver, loc_funcionario):
         """
         Funcionario contem as informações do Terceirizados.
@@ -146,7 +198,7 @@ class Funcionario(PageElement, ClickAgent):
         return f'Funcionario(nome="{self.nome}", cpf="{self.cpf}")'
 
 
-class DemaisInformacoes(PageElement, ClickAgent):
+class DemaisInformacoes(PageElement, TypeAgent):
     def __init__(self, webdriver):
         self.webdriver = webdriver
         self.loc_montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')

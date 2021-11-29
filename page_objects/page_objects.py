@@ -7,6 +7,9 @@ class SeleniumObject:
 
     def find_elements(self, locator):
         return self.webdriver.find_elements(*locator)
+    
+    def _clicar(self, locator):
+        self.webdriver.find_element(*locator).click()
 
 class Page(ABC, SeleniumObject):
     def __init__(self, webdriver, url=''):
