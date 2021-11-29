@@ -44,7 +44,7 @@ class Terceirizados(PageElement):
 
 
 class ClickAgent():
-    def digitar(self, locator, valor):
+    def _digitar(self, locator, valor):
         # uma grande pegadinha é que esse locator é a partir do elemento
         # e não da página.
         elemento = self.find_element(locator)
@@ -67,7 +67,7 @@ class ClickAgent():
             f"0{str(valor)}{modificador}"
         )
 
-    def clicar(self, locator):
+    def _clicar(self, locator):
         self.find_element(locator).click()
 
 
@@ -118,8 +118,8 @@ class Funcionario(PageElement, ClickAgent):
         self._modificar(self.loc_salario_base, valor)
 
     def _modificar(self, locator, valor):
-        self.digitar(locator, valor)
-        self.clicar(self.loc_nome)
+        self._digitar(locator, valor)
+        self._clicar(self.loc_nome)
         # Logo logo botar um wait aqui!
         sleep(3)
         self._load()
@@ -149,22 +149,37 @@ class Funcionario(PageElement, ClickAgent):
 class DemaisInformacoes(PageElement, ClickAgent):
     def __init__(self, webdriver):
         self.webdriver = webdriver
-        self.montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
-        self.montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
-        self.montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
-        self.provisionamento_hora_extra = (
+        self.loc_montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
+        self.loc_montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
+        self.loc_montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
+        self.loc_provisionamento_hora_extra = (
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(1) > tbody'
         )
-        self.provisionamento_viagem = (
+        self.loc_provisionamento_viagem = (
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(2) > tbody'
         )
 
-    def preencher(self, loc_tabela, dados):
-        loc_inputs = self.listar_loc_inputs(loc_tabela)
+    def preencher_montante_A(self, dados):
+        self._preencher(self.loc_montanteA, dados)
+    
+    def preencher_montante_B(self, dados):
+        self._preencher(self.loc_montanteB, dados)
+
+    def preencher_montante_C(self, dados):
+        self._preencher(self.loc_montanteC, dados)
+    
+    def preencher_provisionamento_hora_extra(self, dados):
+        self._preencher(self.loc_provisionamento_hora_extra, dados)
+
+    def preencher_provisionamento_viagem(self, dados):
+        self._preencher(self.loc_provisionamento_viagem, dados)
+
+    def _preencher(self, loc_tabela, dados):
+        loc_inputs = self._listar_loc_inputs(loc_tabela)
         for loc_input, value in zip(loc_inputs, dados):
-            self.digitar(loc_input, value)
+            self._digitar(loc_input, value)
 
     def _listar_loc_inputs(self, loc_tabela):
         complemento = ' ' + 'input'

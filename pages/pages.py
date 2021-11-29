@@ -1,5 +1,5 @@
 from page_objects import Page
-from .elements import Login, Planejamento, Terceirizados, DemaisInformacoes
+from .elements import Login, Planejamento, Terceirizados
 
 
 class PageLogin(Page):
