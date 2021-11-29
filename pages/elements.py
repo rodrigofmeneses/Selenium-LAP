@@ -6,15 +6,15 @@ from time import sleep
 
 
 class Login(PageElement):
-    loc_login = (By.ID, 'user-name')
-    loc_password = (By.ID, 'password')
-    loc_submit = (By.CSS_SELECTOR, '[type="submit"]')
+    _loc_login = (By.ID, 'user-name')
+    _loc_password = (By.ID, 'password')
+    _loc_submit = (By.CSS_SELECTOR, '[type="submit"]')
 
     def logar(self, credenciais):
         self.ler_credenciais(credenciais)
-        self.find_element(self.loc_login).send_keys(self.usuario)
-        self.find_element(self.loc_password).send_keys(self.senha)
-        self._clicar(self.loc_submit)
+        self.find_element(self._loc_login).send_keys(self.usuario)
+        self.find_element(self._loc_password).send_keys(self.senha)
+        self._clicar(self._loc_submit)
     
     def ler_credenciais(self, credenciais):
         with open(credenciais) as f:
@@ -33,7 +33,6 @@ class Planejamento(PageElement):
                 )
             )
         finally:
-            # self._clicar(self.spg_button)
             self._clicar(self.spg_button)
 
 
@@ -85,18 +84,18 @@ class Avisos(PageElement):
         sleep(1)
 
 class Terceirizados(PageElement):
-    loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
+    _loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
 
 
     def _funcionarios_cadastrados(self):
-        num_funcs = len(self.find_elements(self.loc_tabela_terceirizados))
+        num_funcs = len(self.find_elements(self._loc_tabela_terceirizados))
         po_funcs = []
-        loc_funcionario = 'tbody > tr:nth-child({})'
+        _loc_funcionario = 'tbody > tr:nth-child({})'
         for i in range(1, num_funcs + 1):
             po_funcs.append(Funcionario(
                 self.webdriver,
-                (By.CSS_SELECTOR, loc_funcionario.format(i))
+                (By.CSS_SELECTOR, _loc_funcionario.format(i))
             ))
         return po_funcs
 
@@ -130,7 +129,7 @@ class TypeAgent():
 
 
 class Funcionario(PageElement, TypeAgent):
-    def __init__(self, webdriver, loc_funcionario):
+    def __init__(self, webdriver, _loc_funcionario):
         """
         Funcionario contem as informações do Terceirizados.
         selenium_object: objeto te a linha na tabela a qual
@@ -140,58 +139,58 @@ class Funcionario(PageElement, TypeAgent):
         """
         self.webdriver = webdriver
         # Informações
-        self.nome = (By.CSS_SELECTOR, loc_funcionario[1] + ' ' + 'div > span')
-        self.cpf = (By.CSS_SELECTOR, loc_funcionario[1] + ' ' + 'span > span')
+        self.nome = (By.CSS_SELECTOR, _loc_funcionario[1] + ' ' + 'div > span')
+        self.cpf = (By.CSS_SELECTOR, _loc_funcionario[1] + ' ' + 'span > span')
         self.dias_trabalhados = (
             By.CSS_SELECTOR,
-            loc_funcionario[1] + ' ' + 'td:nth-child(6) input'
+            _loc_funcionario[1] + ' ' + 'td:nth-child(6) input'
         )
         self.salario_base = (
             By.CSS_SELECTOR,
-            loc_funcionario[1] + ' ' + 'td:nth-child(7) input'
+            _loc_funcionario[1] + ' ' + 'td:nth-child(7) input'
         )
         self.salario_total = (
             By.CSS_SELECTOR,
-            loc_funcionario[1] + ' ' + 'td:nth-child(13) input'
+            _loc_funcionario[1] + ' ' + 'td:nth-child(13) input'
         )
         self.demais_informacoes = (
             By.CSS_SELECTOR,
-            loc_funcionario[1] + ' ' + 'button'
+            _loc_funcionario[1] + ' ' + 'button'
         )
         # Seletores
-        self.loc_funcionario = loc_funcionario
-        self.loc_nome = self.nome
-        self.loc_cpf = self.cpf
-        self.loc_dias_trabalhados = self.dias_trabalhados
-        self.loc_salario_base = self.salario_base
-        self.loc_salario_total = self.salario_total
-        self.loc_demais_informacoes = self.demais_informacoes
+        self._loc_funcionario = _loc_funcionario
+        self._loc_nome = self.nome
+        self._loc_cpf = self.cpf
+        self._loc_dias_trabalhados = self.dias_trabalhados
+        self._loc_salario_base = self.salario_base
+        self._loc_salario_total = self.salario_total
+        self._loc_demais_informacoes = self.demais_informacoes
 
         self._load()
 
     def modificar_dias_trabalhados(self, valor):
-        self._modificar(self.loc_dias_trabalhados, valor)
+        self._modificar(self._loc_dias_trabalhados, valor)
 
     def modificar_salario_base(self, valor):
-        self._modificar(self.loc_salario_base, valor)
+        self._modificar(self._loc_salario_base, valor)
 
     def _modificar(self, locator, valor):
         self._digitar(locator, valor)
-        self._clicar(self.loc_nome)
+        self._clicar(self._loc_nome)
         # Logo logo botar um wait aqui!
         sleep(3)
         self._load()
 
-    def clicar_demais_informacoes(self):
-        self.find_element(self.loc_demais_informacoes).click()
+    def ir_para_demais_informacoes(self):
+        self._clicar(self._loc_demais_informacoes)
         self.demais_informacoes = DemaisInformacoes(self.webdriver)
 
     def _load(self):
-        self.nome = self._load_text(self.loc_nome)
-        self.cpf = self._load_text(self.loc_cpf)
-        self.dias_trabalhados = self._load_atrib_value(self.loc_dias_trabalhados)
-        self.salario_base = self._load_atrib_value(self.loc_salario_base)
-        self.salario_total = self._load_atrib_value(self.loc_salario_total)
+        self.nome = self._load_text(self._loc_nome)
+        self.cpf = self._load_text(self._loc_cpf)
+        self.dias_trabalhados = self._load_atrib_value(self._loc_dias_trabalhados)
+        self.salario_base = self._load_atrib_value(self._loc_salario_base)
+        self.salario_total = self._load_atrib_value(self._loc_salario_total)
 
     def _load_text(self, locator):
         return self.find_element(locator).text
@@ -207,37 +206,49 @@ class Funcionario(PageElement, TypeAgent):
 class DemaisInformacoes(PageElement, TypeAgent):
     def __init__(self, webdriver):
         self.webdriver = webdriver
-        self.loc_montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
-        self.loc_montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
-        self.loc_montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
-        self.loc_provisionamento_hora_extra = (
+        self._loc_aba_montanteA = (By.CSS_SELECTOR, 'li.nav-item:nth-child(1) a')
+        self._loc_aba_montanteB = (By.CSS_SELECTOR, 'li.nav-item:nth-child(2) a')
+        self._loc_aba_montanteC = (By.CSS_SELECTOR, 'li.nav-item:nth-child(3) a')
+        self._loc_aba_provisionamento = (By.CSS_SELECTOR, 'li.nav-item:nth-child(4) a')
+
+        self._loc_tabela_montanteA = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(1) tbody')
+        self._loc_tabela_montanteB = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(2) tbody')
+        self._loc_tabela_montanteC = (By.CSS_SELECTOR, 'tab.tab-pane:nth-child(3) tbody')
+        self._loc_tabela_provisionamento_hora_extra = (
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(1) > tbody'
         )
-        self.loc_provisionamento_viagem = (
+        self._loc_tabela_provisionamento_viagem = (
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(2) > tbody'
         )
+        self.fechar = (By.CSS_SELECTOR, '.modal-footer button')
 
     def preencher_montante_A(self, dados):
-        self._preencher(self.loc_montanteA, dados)
+        self._preencher(self._loc_tabela_montanteA, dados)
     
     def preencher_montante_B(self, dados):
-        self._preencher(self.loc_montanteB, dados)
+        self._preencher(self._loc_tabela_montanteB, dados)
 
     def preencher_montante_C(self, dados):
-        self._preencher(self.loc_montanteC, dados)
+        self._preencher(self._loc_tabela_montanteC, dados)
     
     def preencher_provisionamento_hora_extra(self, dados):
-        self._preencher(self.loc_provisionamento_hora_extra, dados)
+        self._preencher(self._loc_tabela_provisionamento_hora_extra, dados)
 
     def preencher_provisionamento_viagem(self, dados):
-        self._preencher(self.loc_provisionamento_viagem, dados)
+        self._preencher(self._loc_tabela_provisionamento_viagem, dados)
+
+    def ir_para(self, aba):
+        self._clicar(aba)
+    
+    def fechar(self):
+        self._clicar(self.fechar)
 
     def _preencher(self, loc_tabela, dados):
-        loc_inputs = self._listar_loc_inputs(loc_tabela)
-        for loc_input, value in zip(loc_inputs, dados):
-            self._digitar(loc_input, value)
+        _loc_inputs = self._listar_loc_inputs(loc_tabela)
+        for _loc_input, value in zip(_loc_inputs, dados):
+            self._digitar(_loc_input, value)
 
     def _listar_loc_inputs(self, loc_tabela):
         complemento = ' ' + 'input'
@@ -245,12 +256,12 @@ class DemaisInformacoes(PageElement, TypeAgent):
             (loc_tabela[0], loc_tabela[1] + complemento)
         ))
         complemento = ' ' + '> tr:nth-child({}) input'
-        loc_inputs = []
+        _loc_inputs = []
         for i in range(1, num_inputs + 1):
-            loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i))
-            if self._input_modificavel(loc_input):
-                loc_inputs.append(loc_input)
-        return loc_inputs
+            _loc_input = (loc_tabela[0], loc_tabela[1] + complemento.format(i))
+            if self._input_modificavel(_loc_input):
+                _loc_inputs.append(_loc_input)
+        return _loc_inputs
 
     def _input_modificavel(self, locator):
         return not bool(self.find_element(locator).get_attribute('readonly'))
