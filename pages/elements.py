@@ -3,6 +3,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from page_objects import PageElement
 from time import sleep
+import pandas as pd
 
 
 class Login(PageElement):
@@ -83,12 +84,19 @@ class Avisos(PageElement):
             sleep(0.2)
         sleep(1)
 
+
 class Terceirizados(PageElement):
     _loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
+    dados = pd.DataFrame()
 
 
-    def _funcionarios_cadastrados(self):
+    def carregar_funcionarios(self, dados):
+        self.funcionarios = self._listar_funcionarios_cadastrados()
+        self._set_dados(dados)
+        self._atribuir_dados_funcionarios()
+
+    def _listar_funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self._loc_tabela_terceirizados))
         po_funcs = []
         _loc_funcionario = 'tbody > tr:nth-child({})'
@@ -98,9 +106,15 @@ class Terceirizados(PageElement):
                 (By.CSS_SELECTOR, _loc_funcionario.format(i))
             ))
         return po_funcs
+    
+    def _set_dados(self, dados):
+        self.dados = dados
 
-    def carregar_funcionarios(self):
-        self.funcionarios = self._funcionarios_cadastrados()
+    def _atribuir_dados_funcionarios(self):
+        for func in self.funcionarios:
+            if func.cpf in self.dados.index:
+                    func.dados = self.dados.loc[func.cpf]
+
 
 
 class TypeAgent():
@@ -108,6 +122,9 @@ class TypeAgent():
         # uma grande pegadinha é que esse locator é a partir do elemento
         # e não da página.
         elemento = self.find_element(locator)
+        # conferir se o valor é o mesmo, se for, faz nada.
+        if elemento.text == valor or elemento.get_attribute('value') == valor:
+            return
         # Se o valor tem uma casa decimal, deve digitar de maneira diferente,
         # com um 0 extra, pois 3.20 se torna 0.32
         if len(str(valor).split('.')[-1]) == 1:
@@ -129,7 +146,7 @@ class TypeAgent():
 
 
 class Funcionario(PageElement, TypeAgent):
-    def __init__(self, webdriver, _loc_funcionario):
+    def __init__(self, webdriver, _loc_funcionario, dados=None):
         """
         Funcionario contem as informações do Terceirizados.
         selenium_object: objeto te a linha na tabela a qual
@@ -157,6 +174,7 @@ class Funcionario(PageElement, TypeAgent):
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' ' + 'button'
         )
+        self.dados = dados
         # Seletores
         self._loc_funcionario = _loc_funcionario
         self._loc_nome = self.nome
@@ -165,14 +183,21 @@ class Funcionario(PageElement, TypeAgent):
         self._loc_salario_base = self.salario_base
         self._loc_salario_total = self.salario_total
         self._loc_demais_informacoes = self.demais_informacoes
-
         self._load()
+    
+    def is_total_compativel(self):
+        self._load()
+        return self.dados['Salario Total'] == self.salario_total
 
-    def modificar_dias_trabalhados(self, valor):
+    def preencher_dias_trabalhados(self, valor):
         self._modificar(self._loc_dias_trabalhados, valor)
 
-    def modificar_salario_base(self, valor):
+    def preencher_salario_base(self, valor):
         self._modificar(self._loc_salario_base, valor)
+
+    def ir_para_demais_informacoes(self):
+        self._clicar(self._loc_demais_informacoes)
+        self.demais_informacoes = DemaisInformacoes(self.webdriver)
 
     def _modificar(self, locator, valor):
         self._digitar(locator, valor)
@@ -180,10 +205,6 @@ class Funcionario(PageElement, TypeAgent):
         # Logo logo botar um wait aqui!
         sleep(3)
         self._load()
-
-    def ir_para_demais_informacoes(self):
-        self._clicar(self._loc_demais_informacoes)
-        self.demais_informacoes = DemaisInformacoes(self.webdriver)
 
     def _load(self):
         self.nome = self._load_text(self._loc_nome)
@@ -238,8 +259,20 @@ class DemaisInformacoes(PageElement, TypeAgent):
 
     def preencher_provisionamento_viagem(self, dados):
         self._preencher(self._loc_tabela_provisionamento_viagem, dados)
+    
+    def ir_para_montanteA(self):
+        self._ir_para(self._loc_aba_montanteA)
 
-    def ir_para(self, aba):
+    def ir_para_montanteB(self):
+        self._ir_para(self._loc_aba_montanteB)
+
+    def ir_para_montanteC(self):
+        self._ir_para(self._loc_aba_montanteC)
+        
+    def ir_para_provisionamento(self):
+        self._ir_para(self._loc_aba_provisionamento)
+
+    def _ir_para(self, aba):
         self._clicar(aba)
     
     def fechar(self):

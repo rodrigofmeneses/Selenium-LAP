@@ -1,4 +1,5 @@
 from pages.pages import PageLogin, PageGuardiao, PageSPG, PageFatura
+from time import sleep
 
 
 class Inicializar():
