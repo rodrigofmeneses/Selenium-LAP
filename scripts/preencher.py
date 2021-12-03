@@ -5,17 +5,17 @@ import pandas as pd
 import xlwings as xw
 
 
-class Preencher():
-    dados = None
-    
+class Preencher():    
     def __init__(self, webdriver, path_dados, intervalo=(10,15), planilha='Plan SPG'):
         self.webdriver = webdriver
         self.pagina = PageFatura(self.webdriver)
-        self._carregar_dados(path_dados, intervalo, planilha)
+        self.dados = self._carregar_dados(path_dados, intervalo, planilha)
 
     def run(self):
         funcionarios = self._obter_funcionarios()
         for func in funcionarios:
+            if not func.cpf in self.dados.index:
+                continue
             if func.is_total_compativel():
                 print('Log Positivo')
                 continue
@@ -32,6 +32,18 @@ class Preencher():
         func.preencher_salario_base(func.dados['Salario Base'])
 
     def _preencher_demais_funcionarios(self, func):
+        """Preencher abas demais funcionarios
+        func: funcionario que terá abas preenchidas
+
+        Inicialmente os dados serão segmentados para que seja 
+        preenchida aba por aba.
+
+        Em seguida o botão das demais informações deve ser
+        clicado e ao alcançar a próxima janela deve seguir a
+        ordem - preencher - ir para outra aba - preencher.
+
+        Ao fim, fechar a janela.
+        """
         dados_montanteA = self._segmentar_dados(func.dados, 6, 13)
         dados_montanteB = self._segmentar_dados(func.dados, 13, 25)
         dados_montanteC = self._segmentar_dados(func.dados, 25, 27)
@@ -49,7 +61,6 @@ class Preencher():
         fdi.preencher_provisionamento_hora_extra(dados_hora_extra)
         fdi.preencher_provisionamento_viagem(dados_viagem)
         fdi.fechar_janela()
-        sleep(5)
 
     def _carregar_dados(self, path_dados, intervalo, planilha):
         wb = xw.Book(path_dados)
@@ -65,7 +76,7 @@ class Preencher():
             'Qtd Diarias',  'Passagem',  'Viagem', 'Viagem Taxa',  'Viagem Tributos'
         ]
 
-        self.dados = pd.DataFrame(columns=campos)
+        dados = pd.DataFrame(columns=campos)
 
         for i in range(*intervalo):
             valores_func = []
@@ -91,16 +102,17 @@ class Preencher():
             valores_func += [sheet[f'P{i}'].value] # Plano de saude
             valores_func += [0.] * 11
             s = pd.Series(valores_func, index=campos)
-            self.dados = self.dados.append(s, ignore_index=True)
+            dados = dados.append(s, ignore_index=True)
         # valores_func
-        self.dados = self.dados.fillna(0.)
+        dados = dados.fillna(0.)
 
-        for i in range(self.dados.shape[0]):
-            if self.dados.iloc[i]['Salario Total'] == 0.:
-                for c in self.dados.columns[2:]:
-                    self.dados.at[i, c] = 0.
+        for i in range(dados.shape[0]):
+            if dados.iloc[i]['Salario Total'] == 0.:
+                for c in dados.columns[2:]:
+                    dados.at[i, c] = 0.
 
-        self.dados = self.dados.set_index('CPF')
+        dados = dados.set_index('CPF')
+        return dados
     
     def _segmentar_dados(self, dados, i, j):
         return dados[i:j]

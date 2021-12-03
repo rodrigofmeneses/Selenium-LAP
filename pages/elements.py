@@ -1,3 +1,4 @@
+from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
@@ -112,7 +113,7 @@ class Terceirizados(PageElement):
     def _atribuir_dados_funcionarios(self):
         for func in self.funcionarios:
             if func.cpf in self.dados.index:
-                    func.dados = self.dados.loc[func.cpf]
+                    func.set_dados(self.dados.loc[func.cpf])
 
 
 class TypeAgent():
@@ -138,13 +139,8 @@ class TypeAgent():
                 self._digitar_com_modificador_final(elemento, valor)
     
     def _locator_value_equal_data_value(self, locator, valor):
-        elemento = self.find_element(locator)
-        if elemento.text.replace(',', '.'):
-            input_value = elemento.text.replace(',', '.')
-        else:
-            input_value = elemento.get_attribute('value').replace(',', '.')
-
-        return float(input_value) == valor
+        input_value = self._load_atrib_value(locator)
+        return input_value == valor
 
     def _digitar_com_modificador_final(self, elemento, valor, modificador=''):
         elemento.clear()
@@ -152,15 +148,27 @@ class TypeAgent():
             f"0{str(valor)}{modificador}"
         )
     
+    def _load_text(self, locator):
+        return self.find_element(locator).text
+
+    def _load_atrib_value(self, locator):
+        text = self.find_element(locator).get_attribute('value')
+        return float(text.replace('.', '').replace(',', '.'))
+    
     def _esperar_carregamento(self):
         wbw = WebDriverWait(self.webdriver, 10)
-        wbw.until_not(
-            lambda webdriver : webdriver.find_element((By.CSS_SELECTOR, 'div .block-ui-spinner')).is_displayed()
-        )
+        try:
+            wbw.until_not(
+                # lambda webdriver : webdriver.find_element(*(By.CSS_SELECTOR, 'div .block-ui-spinner')).is_displayed()
+                expected_conditions.visibility_of_any_elements_located(
+                    (By.CSS_SELECTOR, 'div .block-ui-spinner')
+            ))
+        except ElementClickInterceptedException:
+            sleep(3)
 
 
 class Funcionario(PageElement, TypeAgent):
-    def __init__(self, webdriver, _loc_funcionario, dados):
+    def __init__(self, webdriver, _loc_funcionario, dados=None):
         """Funcionario contém todas as informações dos terceirizados.
         
         """
@@ -208,6 +216,9 @@ class Funcionario(PageElement, TypeAgent):
     def ir_para_demais_informacoes(self):
         self._clicar(self._loc_demais_informacoes)
         self.demais_informacoes = DemaisInformacoes(self.webdriver)
+    
+    def set_dados(self, dados):
+        self.dados = dados
 
     def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
@@ -221,13 +232,6 @@ class Funcionario(PageElement, TypeAgent):
         self.dias_trabalhados = self._load_atrib_value(self._loc_dias_trabalhados)
         self.salario_base = self._load_atrib_value(self._loc_salario_base)
         self.salario_total = self._load_atrib_value(self._loc_salario_total)
-
-    def _load_text(self, locator):
-        return self.find_element(locator).text
-
-    def _load_atrib_value(self, locator):
-        text = self.find_element(locator).get_attribute('value')
-        return float(text.replace('.', '').replace(',', '.'))
 
     def __repr__(self):
         return f'Funcionario(nome="{self.nome}", cpf="{self.cpf}")'
