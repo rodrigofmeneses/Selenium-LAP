@@ -123,7 +123,8 @@ class TypeAgent():
         # e não da página.
         elemento = self.find_element(locator)
         # conferir se o valor é o mesmo, se for, faz nada.
-        if elemento.text == valor or elemento.get_attribute('value') == valor:
+        if elemento.text == valor or \
+        elemento.get_attribute('value').replace(',', '.') == valor:
             return
         # Se o valor tem uma casa decimal, deve digitar de maneira diferente,
         # com um 0 extra, pois 3.20 se torna 0.32
@@ -190,20 +191,20 @@ class Funcionario(PageElement, TypeAgent):
         return self.dados['Salario Total'] == self.salario_total
 
     def preencher_dias_trabalhados(self, valor):
-        self._modificar(self._loc_dias_trabalhados, valor)
+        self._digitar_pagina_principal(self._loc_dias_trabalhados, valor)
 
     def preencher_salario_base(self, valor):
-        self._modificar(self._loc_salario_base, valor)
+        self._digitar_pagina_principal(self._loc_salario_base, valor)
 
     def ir_para_demais_informacoes(self):
         self._clicar(self._loc_demais_informacoes)
         self.demais_informacoes = DemaisInformacoes(self.webdriver)
 
-    def _modificar(self, locator, valor):
+    def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
         self._clicar(self._loc_nome)
         # Logo logo botar um wait aqui!
-        sleep(3)
+        sleep(8)
         self._load()
 
     def _load(self):
@@ -275,7 +276,7 @@ class DemaisInformacoes(PageElement, TypeAgent):
     def _ir_para(self, aba):
         self._clicar(aba)
     
-    def fechar(self):
+    def fechar_janela(self):
         self._clicar(self.fechar)
 
     def _preencher(self, loc_tabela, dados):

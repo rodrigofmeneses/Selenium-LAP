@@ -16,4 +16,4 @@ pagina = Inicializar(
     'credenciais.txt'
 ).run()
 
-Preencher(browser, 'data/SPS-10-2021.xls', intervalo=(11, 23)).run()
+# Preencher(browser, 'data/SPS-10-2021.xls', intervalo=(11, 23)).run()
