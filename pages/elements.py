@@ -84,7 +84,6 @@ class Avisos(PageElement):
             sleep(0.2)
         sleep(1)
 
-
 class Terceirizados(PageElement):
     _loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
@@ -116,15 +115,14 @@ class Terceirizados(PageElement):
                     func.dados = self.dados.loc[func.cpf]
 
 
-
 class TypeAgent():
     def _digitar(self, locator, valor):
         # uma grande pegadinha é que esse locator é a partir do elemento
         # e não da página.
         elemento = self.find_element(locator)
-        # conferir se o valor é o mesmo, se for, faz nada.
-        if elemento.text == valor or \
-        elemento.get_attribute('value').replace(',', '.') == valor:
+        # se o valor é o mesmo
+        if self._locator_value_equal_data_value(locator, valor):
+            # não há nada para digitar
             return
         # Se o valor tem uma casa decimal, deve digitar de maneira diferente,
         # com um 0 extra, pois 3.20 se torna 0.32
@@ -138,22 +136,33 @@ class TypeAgent():
                 self._digitar_com_modificador_final(elemento, valor, '-')
             else:
                 self._digitar_com_modificador_final(elemento, valor)
+    
+    def _locator_value_equal_data_value(self, locator, valor):
+        elemento = self.find_element(locator)
+        if elemento.text.replace(',', '.'):
+            input_value = elemento.text.replace(',', '.')
+        else:
+            input_value = elemento.get_attribute('value').replace(',', '.')
+
+        return float(input_value) == valor
 
     def _digitar_com_modificador_final(self, elemento, valor, modificador=''):
         elemento.clear()
         elemento.send_keys(
             f"0{str(valor)}{modificador}"
         )
+    
+    def _esperar_carregamento(self):
+        wbw = WebDriverWait(self.webdriver, 10)
+        wbw.until_not(
+            lambda webdriver : webdriver.find_element((By.CSS_SELECTOR, 'div .block-ui-spinner')).is_displayed()
+        )
 
 
 class Funcionario(PageElement, TypeAgent):
-    def __init__(self, webdriver, _loc_funcionario, dados=None):
-        """
-        Funcionario contem as informações do Terceirizados.
-        selenium_object: objeto te a linha na tabela a qual
-        o funcionario pertence.
-
-        Funcionário é dinâmico, sempre que mexer em algo, tem que atualizar.
+    def __init__(self, webdriver, _loc_funcionario, dados):
+        """Funcionario contém todas as informações dos terceirizados.
+        
         """
         self.webdriver = webdriver
         # Informações
@@ -202,9 +211,8 @@ class Funcionario(PageElement, TypeAgent):
 
     def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
-        self._clicar(self._loc_nome)
-        # Logo logo botar um wait aqui!
-        sleep(8)
+        self._clicar(self._loc_cpf)
+        self._esperar_carregamento()
         self._load()
 
     def _load(self):
@@ -246,6 +254,7 @@ class DemaisInformacoes(PageElement, TypeAgent):
         )
         self.fechar = (By.CSS_SELECTOR, '.modal-footer button')
 
+
     def preencher_montante_A(self, dados):
         self._preencher(self._loc_tabela_montanteA, dados)
     
@@ -272,12 +281,13 @@ class DemaisInformacoes(PageElement, TypeAgent):
         
     def ir_para_provisionamento(self):
         self._ir_para(self._loc_aba_provisionamento)
-
-    def _ir_para(self, aba):
-        self._clicar(aba)
     
     def fechar_janela(self):
         self._clicar(self.fechar)
+        self._esperar_carregamento()
+
+    def _ir_para(self, aba):
+        self._clicar(aba)
 
     def _preencher(self, loc_tabela, dados):
         _loc_inputs = self._listar_loc_inputs(loc_tabela)

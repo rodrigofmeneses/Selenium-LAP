@@ -6,11 +6,11 @@ import xlwings as xw
 
 
 class Preencher():
-    pagina = None
     dados = None
     
     def __init__(self, webdriver, path_dados, intervalo=(10,15), planilha='Plan SPG'):
         self.webdriver = webdriver
+        self.pagina = PageFatura(self.webdriver)
         self._carregar_dados(path_dados, intervalo, planilha)
 
     def run(self):
@@ -24,9 +24,8 @@ class Preencher():
     
     
     def _obter_funcionarios(self):
-        pagina = PageFatura(self.webdriver)
-        pagina.terceirizados.carregar_funcionarios(self.dados)
-        return pagina.terceirizados.funcionarios
+        self.pagina.terceirizados.carregar_funcionarios(self.dados)
+        return self.pagina.terceirizados.funcionarios
 
     def _preencher_pagina_principal(self, func):
         func.preencher_dias_trabalhados(func.dados['Dias Trabalhados'])
