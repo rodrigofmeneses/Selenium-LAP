@@ -1,15 +1,20 @@
-from os import path
-from time import sleep
 from pages.pages import PageFatura
 import pandas as pd
-import xlwings as xw
+from openpyxl import load_workbook
 
-
-class Preencher():    
-    def __init__(self, webdriver, path_dados, intervalo=(10,15), planilha='Plan SPG'):
+class Preencher():
+    '''Classe responsável por preencher os campos dos funcionários
+    na Página de Fatura.
+        webdriver: Objeto Selenium
+        caminho_dados: Caminho do arquivo de dados.
+        intervalo_funcionarios: Intervalo das células onde estão os funcionarios.
+        nome_planilha: Nome da planilha.
+        
+    '''    
+    def __init__(self, webdriver, caminho_dados, intervalo_funcionarios, nome_planilha):
         self.webdriver = webdriver
         self.pagina = PageFatura(self.webdriver)
-        self.dados = self._carregar_dados(path_dados, intervalo, planilha)
+        self.dados = self._carregar_dados(caminho_dados, intervalo_funcionarios, nome_planilha)
 
     def run(self):
         funcionarios = self._obter_funcionarios()
@@ -24,10 +29,16 @@ class Preencher():
     
     
     def _obter_funcionarios(self):
+        '''Obtem a lista de funcionários a partir da tabela de terceirazados
+        na página de fatura e a retorna.
+        '''
         self.pagina.terceirizados.carregar_funcionarios(self.dados)
         return self.pagina.terceirizados.funcionarios
 
     def _preencher_pagina_principal(self, func):
+        '''Preenche os campos da página principal, os dias trabalhados
+        e o salário base. Ambos tem uma maneira semelhante de preenchimento.
+        '''
         func.preencher_dias_trabalhados(func.dados['Dias Trabalhados'])
         func.preencher_salario_base(func.dados['Salario Base'])
 
@@ -62,9 +73,21 @@ class Preencher():
         fdi.preencher_provisionamento_viagem(dados_viagem)
         fdi.fechar_janela()
 
-    def _carregar_dados(self, path_dados, intervalo, planilha):
-        wb = xw.Book(path_dados)
-        sheet = wb.sheets[planilha]
+    def _carregar_dados(self, caminho_dados, intervalo_funcionarios, nome_planilha):
+        '''Carregar os dados do arquivo excel especificado.
+        
+        Atenção, apenas formato xlsx
+
+        O arquivo será aberto e direcionado a planilha especificada.
+        Os campos das colunas será associado a um pandas data frame.
+        Será percorrido todo o intervalo de funcionários e preenchido
+        uma linha por vez dos dados.
+        Os funcionários com Salário zerado terão todos os campos zerados,
+        isso significa que o funcionário ou foi demitido, ou está de férias.
+        Por fim, associa-se os indices aos CPFs e retorna os dados.
+        '''
+        wb = load_workbook(caminho_dados, data_only=True)
+        sheet = wb[nome_planilha]
 
         campos = ['CPF', 'Nome', 'Dias Trabalhados', 'Salario Base', 
             'Salario Total', 'Adicional', 'Adicional Nortuno', 'Reserva', 
@@ -78,11 +101,11 @@ class Preencher():
 
         dados = pd.DataFrame(columns=campos)
 
-        for i in range(*intervalo):
+        for i in range(*intervalo_funcionarios):
             valores_func = []
             valores_func += [sheet[f'U{i}'].value] # CPF
             valores_func += [sheet[f'A{i}'].value] # Nome
-            valores_func += [sheet[f'C{i}'].value] # Dias
+            valores_func += [float(sheet[f'C{i}'].value)] # Dias
             valores_func += [sheet[f'E{i}'].value] # Salario Base
             valores_func += [sheet[f'R{i}'].value] # Salario Total
             valores_func += [sheet[f'G{i}'].value] # Adicional
