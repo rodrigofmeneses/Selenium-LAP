@@ -1,10 +1,11 @@
 from pages.pages import PageFatura
-import pandas as pd
+from collections import namedtuple
 from openpyxl import load_workbook
 
 class Preencher():
-    '''Classe responsável por preencher os campos dos funcionários
-    na Página de Fatura.
+    '''Classe responsável por preencher os campos dos funcionários na Página de Fatura.
+    
+    Args:
         webdriver: Objeto Selenium
         caminho_dados: Caminho do arquivo de dados.
         intervalo_funcionarios: Intervalo das células onde estão os funcionarios.
@@ -19,7 +20,7 @@ class Preencher():
     def run(self):
         funcionarios = self._obter_funcionarios()
         for func in funcionarios:
-            if not func.cpf in self.dados.index:
+            if not func.cpf in self.dados.keys():
                 continue
             if func.is_total_compativel():
                 print('Log Positivo')
@@ -39,8 +40,8 @@ class Preencher():
         '''Preenche os campos da página principal, os dias trabalhados
         e o salário base. Ambos tem uma maneira semelhante de preenchimento.
         '''
-        func.preencher_dias_trabalhados(func.dados['Dias Trabalhados'])
-        func.preencher_salario_base(func.dados['Salario Base'])
+        func.preencher_dias_trabalhados(func.dados.dias_trabalhados)
+        func.preencher_salario_base(func.dados.salario_base)
 
     def _preencher_demais_funcionarios(self, func):
         """Preencher abas demais funcionarios
@@ -55,11 +56,15 @@ class Preencher():
 
         Ao fim, fechar a janela.
         """
-        dados_montanteA = self._segmentar_dados(func.dados, 6, 13)
-        dados_montanteB = self._segmentar_dados(func.dados, 13, 25)
-        dados_montanteC = self._segmentar_dados(func.dados, 25, 27)
-        dados_hora_extra = self._segmentar_dados(func.dados, 27, 33)
-        dados_viagem = self._segmentar_dados(func.dados, 33, 38)
+
+        def segmentar_dados(dados, i, j):
+            return dados[i:j]
+
+        dados_montanteA = segmentar_dados(func.dados, 6, 13)
+        dados_montanteB = segmentar_dados(func.dados, 13, 25)
+        dados_montanteC = segmentar_dados(func.dados, 25, 27)
+        dados_hora_extra = segmentar_dados(func.dados, 27, 33)
+        dados_viagem = segmentar_dados(func.dados, 33, 38)
 
         func.ir_para_demais_informacoes()
         fdi = func.demais_informacoes
@@ -89,23 +94,23 @@ class Preencher():
         wb = load_workbook(caminho_dados, data_only=True)
         sheet = wb[nome_planilha]
 
-        campos = ['CPF', 'Nome', 'Dias Trabalhados', 'Salario Base', 
-            'Salario Total', 'Adicional', 'Adicional Nortuno', 'Reserva', 
-            'Encargos', 'Insalibridade', 'Periculosidade', 'Outros', 
-            'Vale Transporte', 'Vale Refeicao', 'Taxa', 'Cesta', 'Farda', 
-            'Municao', 'Seguro Vida', 'Supervisao', 'IJD', 'IJN', 'Tributos', 
-            'Insumos', 'Equipamento', 'Plano Saude', 'Qtd Hora Extra', 
-            'Valor Hora Extra', 'DSR', 'Hora Encargos',  'Hora Taxa', 'Hora Tributos', 
-            'Qtd Diarias',  'Passagem',  'Viagem', 'Viagem Taxa',  'Viagem Tributos'
-        ]
+        campos = '''cpf nome dias_trabalhados salario_base salario_total adicional 
+            adicional_noturno reserva encargos insalubridade periculosidade outros 
+            vale_transporte vale_refeicao taxa cesta farda municao seguro_vida supervisao 
+            ijd ijn tributos insumos equipamento plano_saude qtd_hora_extra valor_hora_extra 
+            dsr hora_encargos hora_taxa hora_tributos qtd_diarias passagem viagem viagem_taxa viagem_tributos'''
 
-        dados = pd.DataFrame(columns=campos)
+        dados = {}
+        Func = namedtuple('Funcionario', campos)
 
         for i in range(*intervalo_funcionarios):
             valores_func = []
-            valores_func += [sheet[f'U{i}'].value] # CPF
+            cpf = sheet[f'U{i}'].value # CPF
+            if not cpf:
+                continue 
+            valores_func += [cpf] # CPF
             valores_func += [sheet[f'A{i}'].value] # Nome
-            valores_func += [float(sheet[f'C{i}'].value)] # Dias
+            valores_func += [sheet[f'C{i}'].value] # Dias
             valores_func += [sheet[f'E{i}'].value] # Salario Base
             valores_func += [sheet[f'R{i}'].value] # Salario Total
             valores_func += [sheet[f'G{i}'].value] # Adicional
@@ -115,7 +120,7 @@ class Preencher():
             valores_func += [sheet[f'F{i}'].value] # Periculosidade
             valores_func += [0.] # Outros
             valores_func += [sheet[f'K{i}'].value] # Vale Transporte
-            valores_func += [sheet[f'L{i}'].value] # Vale Alimentacao
+            valores_func += [sheet[f'L{i}'].value] # Vale Refeicao
             valores_func += [sheet[f'J{i}'].value] # Taxa
             valores_func += [sheet[f'N{i}'].value] # Cesta
             valores_func += [sheet[f'M{i}'].value] # Farda
@@ -124,18 +129,13 @@ class Preencher():
             valores_func += [0.] * 2
             valores_func += [sheet[f'P{i}'].value] # Plano de saude
             valores_func += [0.] * 11
-            s = pd.Series(valores_func, index=campos)
-            dados = dados.append(s, ignore_index=True)
-        # valores_func
-        dados = dados.fillna(0.)
 
-        for i in range(dados.shape[0]):
-            if dados.iloc[i]['Salario Total'] == 0.:
-                for c in dados.columns[2:]:
-                    dados.at[i, c] = 0.
+            valores_func = [valor if bool(valor) and valores_func[4] != 0. else 0.
+                            for valor in valores_func]
+            
+            func = Func(*valores_func)
+            dados[func.cpf] = func
 
-        dados = dados.set_index('CPF')
         return dados
     
-    def _segmentar_dados(self, dados, i, j):
-        return dados[i:j]
+    
