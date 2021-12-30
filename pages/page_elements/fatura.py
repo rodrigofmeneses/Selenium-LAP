@@ -4,37 +4,30 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from page_objects import PageElement
 from time import sleep
-import pandas as pd
 
 class Terceirizados(PageElement):
     _loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
-    dados = pd.DataFrame()
-
 
     def carregar_funcionarios(self, dados):
         self.funcionarios = self._listar_funcionarios_cadastrados()
-        self._set_dados(dados)
-        self._atribuir_dados_funcionarios()
+        self._atribuir_dados_funcionarios(dados)
 
     def _listar_funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self._loc_tabela_terceirizados))
-        po_funcs = []
+        funcs = []
         _loc_funcionario = 'tbody > tr:nth-child({})'
         for i in range(1, num_funcs + 1):
-            po_funcs.append(Funcionario(
+            funcs.append(Funcionario(
                 self.webdriver,
                 (By.CSS_SELECTOR, _loc_funcionario.format(i))
             ))
-        return po_funcs
-    
-    def _set_dados(self, dados):
-        self.dados = dados
+        return funcs
 
-    def _atribuir_dados_funcionarios(self):
+    def _atribuir_dados_funcionarios(self, dados):
         for func in self.funcionarios:
-            if func.cpf in self.dados.index:
-                    func.set_dados(self.dados.loc[func.cpf])
+            if func.cpf in dados.keys():
+                    func.dados = dados[func.cpf]
 
 
 class TypeAgent():
@@ -46,14 +39,22 @@ class TypeAgent():
         if self._locator_value_equal_data_value(locator, valor):
             # não há nada para digitar
             return
-        # Se o valor tem uma casa decimal, deve digitar de maneira diferente,
-        # com um 0 extra, pois 3.20 se torna 0.32
-        if len(str(valor).split('.')[-1]) == 1:
+        # Para a digitação deve atentar-se as casas decimais
+        if isinstance(valor, int):
+        # Caso seja um inteiro, deve adicionar 2 casas decimais
+            if valor < 0:
+                self._digitar_com_modificador_final(elemento, valor, '00-')
+            else:
+                self._digitar_com_modificador_final(elemento, valor, '00')
+        elif len(str(valor).split('.')[-1]) == 1:
+        # Já se o valor tem uma casa decimal, 
+        # é necessário um 0 extra, pois 3.20 se torna 0.32
             if valor < 0:
                 self._digitar_com_modificador_final(elemento, valor, '0-')
             else:
                 self._digitar_com_modificador_final(elemento, valor, '0')
         else:
+        # Aqui pode-se digitar normalmente
             if valor < 0:
                 self._digitar_com_modificador_final(elemento, valor, '-')
             else:
@@ -90,9 +91,7 @@ class TypeAgent():
 
 class Funcionario(PageElement, TypeAgent):
     def __init__(self, webdriver, _loc_funcionario, dados=None):
-        """Funcionario contém todas as informações dos terceirizados.
-        
-        """
+        """Funcionario contém todas as informações dos terceirizados."""
         self.webdriver = webdriver
         # Informações
         self.nome = (By.CSS_SELECTOR, _loc_funcionario[1] + ' ' + 'div > span')
@@ -126,7 +125,7 @@ class Funcionario(PageElement, TypeAgent):
     
     def is_total_compativel(self):
         self._load()
-        return self.dados['Salario Total'] == self.salario_total
+        return self.dados.salario_total == self.salario_total
 
     def preencher_dias_trabalhados(self, valor):
         self._digitar_pagina_principal(self._loc_dias_trabalhados, valor)
@@ -137,9 +136,6 @@ class Funcionario(PageElement, TypeAgent):
     def ir_para_demais_informacoes(self):
         self._clicar(self._loc_demais_informacoes)
         self.demais_informacoes = DemaisInformacoes(self.webdriver)
-    
-    def set_dados(self, dados):
-        self.dados = dados
 
     def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
