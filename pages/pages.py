@@ -1,7 +1,8 @@
 from page_objects import Page
-from .elements import (
-    Login, Planejamento, MenuSuperior, MenuLateral, 
-    Avisos, Terceirizados)
+from pages.page_elements.login import Login
+from pages.page_elements.guardiao import Planejamento
+from pages.page_elements.spg import MenuSuperior, MenuLateral, Avisos
+from pages.page_elements.fatura import Terceirizados
 
 
 class PageLogin(Page):
