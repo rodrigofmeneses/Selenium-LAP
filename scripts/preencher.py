@@ -1,5 +1,5 @@
 from pages.pages import PageFatura
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from openpyxl import load_workbook
 
 class Preencher():
@@ -17,23 +17,33 @@ class Preencher():
         self.pagina = PageFatura(self.webdriver)
         self.dados = self._carregar_dados(caminho_dados, intervalo_funcionarios, nome_planilha)
 
-    def run(self):
-        funcionarios = self._obter_funcionarios()
-        for func in funcionarios:
+    def run(self, inicio=0):
+        funcionarios = self._obter_funcionarios(self.dados)
+        func_atual = inicio
+        for func in funcionarios[inicio:]:
+            print(func_atual, func.nome, func.cpf)
+            func_atual += 1
             if not func.cpf in self.dados.keys():
+                print('Funcionário não está na planilha')
                 continue
             if func.is_total_compativel():
-                print('Log Positivo')
+                print('Total compatível!')
                 continue
             self._preencher_pagina_principal(func)
             self._preencher_demais_funcionarios(func)
+            
+            if func.is_total_compativel():
+                print('Total compatível!')
+            else:
+                print('Total incompatível. Algo está errado')
+                print('-' * 20)
     
     
-    def _obter_funcionarios(self):
+    def _obter_funcionarios(self, dados):
         '''Obtem a lista de funcionários a partir da tabela de terceirazados
         na página de fatura e a retorna.
         '''
-        self.pagina.terceirizados.carregar_funcionarios(self.dados)
+        self.pagina.terceirizados.carregar_funcionarios(dados)
         return self.pagina.terceirizados.funcionarios
 
     def _preencher_pagina_principal(self, func):
@@ -60,11 +70,11 @@ class Preencher():
         def segmentar_dados(dados, i, j):
             return dados[i:j]
 
-        dados_montanteA = segmentar_dados(func.dados, 6, 13)
-        dados_montanteB = segmentar_dados(func.dados, 13, 25)
-        dados_montanteC = segmentar_dados(func.dados, 25, 27)
-        dados_hora_extra = segmentar_dados(func.dados, 27, 33)
-        dados_viagem = segmentar_dados(func.dados, 33, 38)
+        dados_montanteA = segmentar_dados(func.dados, 5, 12)
+        dados_montanteB = segmentar_dados(func.dados, 12, 24)
+        dados_montanteC = segmentar_dados(func.dados, 24, 26)
+        dados_hora_extra = segmentar_dados(func.dados, 27, 32)
+        dados_viagem = segmentar_dados(func.dados, 32, 37)
 
         func.ir_para_demais_informacoes()
         fdi = func.demais_informacoes
@@ -94,13 +104,16 @@ class Preencher():
         wb = load_workbook(caminho_dados, data_only=True)
         sheet = wb[nome_planilha]
 
-        campos = '''cpf nome dias_trabalhados salario_base salario_total adicional 
-            adicional_noturno reserva encargos insalubridade periculosidade outros 
-            vale_transporte vale_refeicao taxa cesta farda municao seguro_vida supervisao 
-            ijd ijn tributos insumos equipamento plano_saude qtd_hora_extra valor_hora_extra 
-            dsr hora_encargos hora_taxa hora_tributos qtd_diarias passagem viagem viagem_taxa viagem_tributos'''
+        # configuração para sps
+        campos = '''cpf nome dias_trabalhados salario_base salario_total 
+            adicional adicional_noturno reserva encargos insalubridade periculosidade outros 
+            vale_transporte vale_refeicao taxa cesta farda 
+            municao seguro_vida supervisao ijd ijn tributos insumos 
+            equipamento plano_saude 
+            qtd_hora_extra valor_hora_extra dsr hora_encargos hora_taxa hora_tributos 
+            qtd_diarias passagem viagem viagem_taxa viagem_tributos'''
 
-        dados = {}
+        dados = OrderedDict()
         Func = namedtuple('Funcionario', campos)
 
         for i in range(*intervalo_funcionarios):
