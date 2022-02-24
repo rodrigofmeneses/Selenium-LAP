@@ -28,7 +28,7 @@ class Preencher():
                 continue
             if func.is_total_compativel():
                 print('Total compatível!')
-                continue
+                # continue
             self._preencher_pagina_principal(func)
             self._preencher_demais_funcionarios(func)
             
@@ -71,10 +71,10 @@ class Preencher():
             return dados[i:j]
 
         dados_montanteA = segmentar_dados(func.dados, 5, 12)
-        dados_montanteB = segmentar_dados(func.dados, 12, 24)
-        dados_montanteC = segmentar_dados(func.dados, 24, 26)
-        dados_hora_extra = segmentar_dados(func.dados, 27, 32)
-        dados_viagem = segmentar_dados(func.dados, 32, 37)
+        dados_montanteB = segmentar_dados(func.dados, 12, 25)
+        dados_montanteC = segmentar_dados(func.dados, 25, 26)
+        # dados_hora_extra = segmentar_dados(func.dados, 27, 32)
+        # dados_viagem = segmentar_dados(func.dados, 32, 37)
 
         func.ir_para_demais_informacoes()
         fdi = func.demais_informacoes
@@ -83,9 +83,9 @@ class Preencher():
         fdi.preencher_montante_B(dados_montanteB)
         fdi.ir_para_montanteC()
         fdi.preencher_montante_C(dados_montanteC)
-        fdi.ir_para_provisionamento()
-        fdi.preencher_provisionamento_hora_extra(dados_hora_extra)
-        fdi.preencher_provisionamento_viagem(dados_viagem)
+        # fdi.ir_para_provisionamento()
+        # fdi.preencher_provisionamento_hora_extra(dados_hora_extra)
+        # fdi.preencher_provisionamento_viagem(dados_viagem)
         fdi.fechar_janela()
 
     def _carregar_dados(self, caminho_dados, intervalo_funcionarios, nome_planilha):
@@ -105,13 +105,45 @@ class Preencher():
         sheet = wb[nome_planilha]
 
         # configuração para sps
-        campos = '''cpf nome dias_trabalhados salario_base salario_total 
-            adicional adicional_noturno reserva encargos insalubridade periculosidade outros 
-            vale_transporte vale_refeicao taxa cesta farda 
-            municao seguro_vida supervisao ijd ijn tributos insumos 
-            equipamento plano_saude 
-            qtd_hora_extra valor_hora_extra dsr hora_encargos hora_taxa hora_tributos 
-            qtd_diarias passagem viagem viagem_taxa viagem_tributos'''
+        campos = '''
+            cpf
+            nome
+            dias_trabalhados
+            salario_base
+            salario_total
+            adicional
+            adicional_noturno
+            reserva
+            encargos
+            insalubridade
+            periculosidade
+            outros 
+            vale_transporte
+            vale_refeicao
+            taxa
+            cesta
+            farda 
+            municao
+            seguro_vida
+            supervisao
+            plano_saude
+            ijd
+            ijn
+            tributos
+            insumos 
+            equipamento
+            qtd_hora_extra
+            valor_hora_extra
+            dsr
+            hora_encargos
+            hora_taxa
+            hora_tributos 
+            qtd_diarias
+            passagem
+            viagem
+            viagem_taxa
+            viagem_tributos
+        '''
 
         dados = OrderedDict()
         Func = namedtuple('Funcionario', campos)
@@ -137,11 +169,11 @@ class Preencher():
             valores_func += [sheet[f'J{i}'].value] # Taxa
             valores_func += [sheet[f'N{i}'].value] # Cesta
             valores_func += [sheet[f'M{i}'].value] # Farda
-            valores_func += [0.] * 5
-            valores_func += [sheet[f'O{i}'].value] # Tributos
+            valores_func += [0.] * 3
+            valores_func += [sheet[f'O{i}'].value] # Plano de saude
             valores_func += [0.] * 2
-            valores_func += [sheet[f'P{i}'].value] # Plano de saude
-            valores_func += [0.] * 11
+            valores_func += [sheet[f'P{i}'].value] # Tributos
+            valores_func += [0.] * 13
 
             valores_func = [valor if bool(valor) and valores_func[4] != 0. else 0.
                             for valor in valores_func]
