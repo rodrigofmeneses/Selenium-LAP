@@ -5,7 +5,6 @@ from selenium.webdriver.support import expected_conditions
 
 
 class Planejamento(PageElement):
-    # spg_button = (By.CSS_SELECTOR, 'glo-element-block.ng-tns-c37-10')
     spg_button = (By.ID, 'glo-elementblock-0')
 
     def acessar_spg(self):
