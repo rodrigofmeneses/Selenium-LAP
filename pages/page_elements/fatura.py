@@ -1,131 +1,58 @@
+from logging import exception
+from pages.page_elements.funcionario import Funcionario
+from pages.page_elements.type import TypeAgent
+from page_objects import PageElement
 from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
-from page_objects import PageElement
 from time import sleep
 
-class Terceirizados(PageElement):
+class TerceirizadosFatura(PageElement):
     _loc_tabela_terceirizados = (By.CSS_SELECTOR, 'tbody > tr')
     funcionarios = []
 
-    def carregar_funcionarios(self, dados):
+    def carregar_funcionarios(self):
         self.funcionarios = self._listar_funcionarios_cadastrados()
-        self._atribuir_dados_funcionarios(dados)
 
     def _listar_funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self._loc_tabela_terceirizados))
         funcs = []
         _loc_funcionario = 'tbody > tr:nth-child({})'
         for i in range(1, num_funcs + 1):
-            funcs.append(Funcionario(
+            funcs.append(FuncionarioFatura(
                 self.webdriver,
                 (By.CSS_SELECTOR, _loc_funcionario.format(i))
             ))
         return funcs
 
-    def _atribuir_dados_funcionarios(self, dados):
-        for func in self.funcionarios:
-            if func.cpf in dados.keys():
-                    func.dados = dados[func.cpf]
-
-
-class TypeAgent():
-    def _digitar(self, locator, valor):
-        # uma grande pegadinha é que esse locator é a partir do elemento
-        # e não da página.
-        elemento = self.find_element(locator)
-        # se o valor é o mesmo
-        if self._locator_value_equal_data_value(locator, valor):
-            # não há nada para digitar
-            return
-        # Para a digitação deve atentar-se as casas decimais
-        if isinstance(valor, int):
-        # Caso seja um inteiro, deve adicionar 2 casas decimais
-            if valor < 0:
-                self._digitar_com_modificador_final(elemento, valor, '00-')
-            else:
-                self._digitar_com_modificador_final(elemento, valor, '00')
-        elif len(str(valor).split('.')[-1]) == 1:
-        # Já se o valor tem uma casa decimal, 
-        # é necessário um 0 extra, pois 3.20 se torna 0.32
-            if valor < 0:
-                self._digitar_com_modificador_final(elemento, valor, '0-')
-            else:
-                self._digitar_com_modificador_final(elemento, valor, '0')
-        else:
-        # Aqui pode-se digitar normalmente
-            if valor < 0:
-                self._digitar_com_modificador_final(elemento, valor, '-')
-            else:
-                self._digitar_com_modificador_final(elemento, valor)
+class FuncionarioFatura(Funcionario):
+    """Funcionario contém todas as informações dos terceirizados."""
+    dias_trabalhados = None
+    salario_base = None
+    salario_total = None
+    demais_informacoes = None
     
-    def _locator_value_equal_data_value(self, locator, valor):
-        input_value = self._load_atrib_value(locator)
-        return input_value == valor
-
-    def _digitar_com_modificador_final(self, elemento, valor, modificador=''):
-        elemento.clear()
-        elemento.send_keys(
-            f"0{str(valor)}{modificador}"
-        )
-    
-    def _load_text(self, locator):
-        return self.find_element(locator).text
-
-    def _load_atrib_value(self, locator):
-        text = self.find_element(locator).get_attribute('value')
-        return float(text.replace('.', '').replace(',', '.'))
-    
-    def _esperar_carregamento(self):
-        wbw = WebDriverWait(self.webdriver, 10)
-        try:
-            wbw.until_not(
-                # lambda webdriver : webdriver.find_element(*(By.CSS_SELECTOR, 'div .block-ui-spinner')).is_displayed()
-                expected_conditions.visibility_of_any_elements_located(
-                    (By.CSS_SELECTOR, 'div .block-ui-spinner')
-            ))
-        except ElementClickInterceptedException:
-            sleep(3)
-
-
-class Funcionario(PageElement, TypeAgent):
     def __init__(self, webdriver, _loc_funcionario, dados=None):
-        """Funcionario contém todas as informações dos terceirizados."""
-        self.webdriver = webdriver
-        # Informações
-        self.nome = (By.CSS_SELECTOR, _loc_funcionario[1] + ' ' + 'div > span')
-        self.cpf = (By.CSS_SELECTOR, _loc_funcionario[1] + ' ' + 'span > span')
-        self.dias_trabalhados = (
+        super().__init__(webdriver, _loc_funcionario)
+        # Seletores
+        self._loc_dias_trabalhados = (
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' ' + 'td:nth-child(6) input'
         )
-        self.salario_base = (
+        self._loc_salario_base = (
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' ' + 'td:nth-child(7) input'
         )
-        self.salario_total = (
+        self._loc_salario_total = (
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' ' + 'td:nth-child(13) input'
         )
-        self.demais_informacoes = (
+        self._loc_demais_informacoes = (
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' ' + 'button'
         )
-        self.dados = dados
-        # Seletores
-        self._loc_funcionario = _loc_funcionario
-        self._loc_nome = self.nome
-        self._loc_cpf = self.cpf
-        self._loc_dias_trabalhados = self.dias_trabalhados
-        self._loc_salario_base = self.salario_base
-        self._loc_salario_total = self.salario_total
-        self._loc_demais_informacoes = self.demais_informacoes
-        self._load()
-    
-    def is_total_compativel(self):
-        self._load()
-        return self.dados.salario_total == self.salario_total
+        self._load_data()
 
     def preencher_dias_trabalhados(self, valor):
         self._digitar_pagina_principal(self._loc_dias_trabalhados, valor)
@@ -135,17 +62,18 @@ class Funcionario(PageElement, TypeAgent):
 
     def ir_para_demais_informacoes(self):
         self._clicar(self._loc_demais_informacoes)
-        self.demais_informacoes = DemaisInformacoes(self.webdriver)
+        try:
+            self.demais_informacoes = DemaisInformacoes(self.webdriver)
+        except exception:
+            print('Problema com substituto')
 
     def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
         self._clicar(self._loc_cpf)
         self._esperar_carregamento()
-        self._load()
+        self._load_data()
 
-    def _load(self):
-        self.nome = self._load_text(self._loc_nome)
-        self.cpf = self._load_text(self._loc_cpf)
+    def _load_data(self):
         self.dias_trabalhados = self._load_atrib_value(self._loc_dias_trabalhados)
         self.salario_base = self._load_atrib_value(self._loc_salario_base)
         self.salario_total = self._load_atrib_value(self._loc_salario_total)
@@ -154,7 +82,7 @@ class Funcionario(PageElement, TypeAgent):
         return f'Funcionario(nome="{self.nome}", cpf="{self.cpf}")'
 
 
-class DemaisInformacoes(PageElement, TypeAgent):
+class DemaisInformacoes(TypeAgent):
     def __init__(self, webdriver):
         self.webdriver = webdriver
         self._loc_aba_montanteA = (By.CSS_SELECTOR, 'li.nav-item:nth-child(1) a')
@@ -173,8 +101,7 @@ class DemaisInformacoes(PageElement, TypeAgent):
             By.CSS_SELECTOR,
             'tab.tab-pane:nth-child(4) > table:nth-child(2) > tbody'
         )
-        self.fechar = (By.CSS_SELECTOR, '.modal-footer button')
-
+        self._loc_fechar = (By.CSS_SELECTOR, '.modal-footer button')
 
     def preencher_montante_A(self, dados):
         self._preencher(self._loc_tabela_montanteA, dados)
@@ -204,7 +131,7 @@ class DemaisInformacoes(PageElement, TypeAgent):
         self._ir_para(self._loc_aba_provisionamento)
     
     def fechar_janela(self):
-        self._clicar(self.fechar)
+        self._clicar(self._loc_fechar)
         self._esperar_carregamento()
 
     def _ir_para(self, aba):
@@ -212,8 +139,14 @@ class DemaisInformacoes(PageElement, TypeAgent):
 
     def _preencher(self, loc_tabela, dados):
         _loc_inputs = self._listar_loc_inputs(loc_tabela)
-        for _loc_input, value in zip(_loc_inputs, dados):
-            self._digitar(_loc_input, value)
+        tabela = self.find_element(loc_tabela)
+
+        for row, _loc_input in zip(tabela.find_elements(By.TAG_NAME, 'tr'), _loc_inputs):
+            descricao = row.find_element(By.TAG_NAME, 'td').text
+            try:
+                self._digitar(_loc_input, dados[descricao])
+            except KeyError:
+                ...
 
     def _listar_loc_inputs(self, loc_tabela):
         complemento = ' ' + 'input'

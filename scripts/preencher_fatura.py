@@ -2,7 +2,7 @@ from pages.pages import PageFatura
 from collections import namedtuple, OrderedDict
 from openpyxl import load_workbook
 
-class Preencher():
+class PreencherFatura():
     '''Classe responsável por preencher os campos dos funcionários na Página de Fatura.
     
     Args:
@@ -28,7 +28,7 @@ class Preencher():
                 continue
             if func.is_total_compativel():
                 print('Total compatível!')
-                # continue
+                continue
             self._preencher_pagina_principal(func)
             self._preencher_demais_funcionarios(func)
             
@@ -57,35 +57,23 @@ class Preencher():
         """Preencher abas demais funcionarios
         func: funcionario que terá abas preenchidas
 
-        Inicialmente os dados serão segmentados para que seja 
-        preenchida aba por aba.
-
-        Em seguida o botão das demais informações deve ser
+        O botão das demais informações deve ser
         clicado e ao alcançar a próxima janela deve seguir a
         ordem - preencher - ir para outra aba - preencher.
 
         Ao fim, fechar a janela.
         """
 
-        def segmentar_dados(dados, i, j):
-            return dados[i:j]
-
-        dados_montanteA = segmentar_dados(func.dados, 5, 12)
-        dados_montanteB = segmentar_dados(func.dados, 12, 25)
-        dados_montanteC = segmentar_dados(func.dados, 25, 26)
-        # dados_hora_extra = segmentar_dados(func.dados, 27, 32)
-        # dados_viagem = segmentar_dados(func.dados, 32, 37)
-
         func.ir_para_demais_informacoes()
         fdi = func.demais_informacoes
-        fdi.preencher_montante_A(dados_montanteA)
+        fdi.preencher_montante_A(self.dados)
         fdi.ir_para_montanteB()
-        fdi.preencher_montante_B(dados_montanteB)
+        fdi.preencher_montante_B(self.dados)
         fdi.ir_para_montanteC()
-        fdi.preencher_montante_C(dados_montanteC)
-        # fdi.ir_para_provisionamento()
-        # fdi.preencher_provisionamento_hora_extra(dados_hora_extra)
-        # fdi.preencher_provisionamento_viagem(dados_viagem)
+        fdi.preencher_montante_C(self.dados)
+        fdi.ir_para_provisionamento()
+        fdi.preencher_provisionamento_hora_extra(self.dados)
+        fdi.preencher_provisionamento_viagem(self.dados)
         fdi.fechar_janela()
 
     def _carregar_dados(self, caminho_dados, intervalo_funcionarios, nome_planilha):
@@ -126,12 +114,12 @@ class Preencher():
             municao
             seguro_vida
             supervisao
+            equipamento
             plano_saude
             ijd
             ijn
             tributos
             insumos 
-            equipamento
             qtd_hora_extra
             valor_hora_extra
             dsr
@@ -144,6 +132,8 @@ class Preencher():
             viagem_taxa
             viagem_tributos
         '''
+
+        
 
         dados = OrderedDict()
         Func = namedtuple('Funcionario', campos)
@@ -169,11 +159,11 @@ class Preencher():
             valores_func += [sheet[f'J{i}'].value] # Taxa
             valores_func += [sheet[f'N{i}'].value] # Cesta
             valores_func += [sheet[f'M{i}'].value] # Farda
-            valores_func += [0.] * 3
+            valores_func += [0.] * 4
             valores_func += [sheet[f'O{i}'].value] # Plano de saude
             valores_func += [0.] * 2
             valores_func += [sheet[f'P{i}'].value] # Tributos
-            valores_func += [0.] * 13
+            valores_func += [0.] * 12
 
             valores_func = [valor if bool(valor) and valores_func[4] != 0. else 0.
                             for valor in valores_func]
