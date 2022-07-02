@@ -1,5 +1,5 @@
 from pages.pages import PageLogin, PageGuardiao, PageSPG, PageFatura
-from time import sleep
+from selenium.webdriver import Firefox
 
 
 class Inicializar():
@@ -31,3 +31,12 @@ class Inicializar():
         self.pagina.avisos.fechar_avisos()
         self.pagina.menu_lateral.clicar_fatura()
         self.pagina.menu_lateral.clicar_controle_de_fatura()
+
+if __name__ == '__main__':
+    browser = Firefox()
+
+    pagina = Inicializar(
+        browser,
+        'https://guardiaov4.seplag.ce.gov.br/auth',
+        'credenciais.txt'
+    ).run()

@@ -6,11 +6,11 @@ from time import sleep
 
 
 class MenuSuperior(PageElement):
-    sister_button = (By.CSS_SELECTOR, 'li:nth-child(6) > a.menu')
+    sister_button = (By.CSS_SELECTOR, 'li.menu-topo:nth-child(5) > a:nth-child(1)')
     
     def clicar_sister(self):
         try:
-            botao = WebDriverWait(self.webdriver, 10).until(
+            WebDriverWait(self.webdriver, 10).until(
                 expected_conditions.presence_of_element_located(
                     self.sister_button
                 )
@@ -23,11 +23,11 @@ class MenuSuperior(PageElement):
 class MenuLateral(PageElement):
     fatura_button = (
         By.CSS_SELECTOR, 
-        'ul:nth-child(1) > li:nth-child(7) > a:nth-child(1)'
+        '.navi > ul:nth-child(1) > li:nth-child(6) > a:nth-child(1)'
     )
     controle_de_fatura_button = (
         By.CSS_SELECTOR, 
-        'li.active:nth-child(7) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)'
+        'li.active:nth-child(6) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)'
     )
 
     def clicar_fatura(self):
