@@ -1,5 +1,4 @@
 from pages.pages import PageFatura
-from collections import namedtuple, OrderedDict
 from openpyxl import load_workbook
 
 class PreencherFatura():
@@ -92,85 +91,55 @@ class PreencherFatura():
         wb = load_workbook(caminho_dados, data_only=True)
         sheet = wb[nome_planilha]
 
-        # configuração para sps
-        campos = '''
-            cpf
-            nome
-            dias_trabalhados
-            salario_base
-            salario_total
-            adicional
-            adicional_noturno
-            reserva
-            encargos
-            insalubridade
-            periculosidade
-            outros 
-            vale_transporte
-            vale_refeicao
-            taxa
-            cesta
-            farda 
-            municao
-            seguro_vida
-            supervisao
-            equipamento
-            plano_saude
-            ijd
-            ijn
-            tributos
-            insumos 
-            qtd_hora_extra
-            valor_hora_extra
-            dsr
-            hora_encargos
-            hora_taxa
-            hora_tributos 
-            qtd_diarias
-            passagem
-            viagem
-            viagem_taxa
-            viagem_tributos
-        '''
-
-        
-
-        dados = OrderedDict()
-        Func = namedtuple('Funcionario', campos)
-
+        dados = {}
         for i in range(*intervalo_funcionarios):
-            valores_func = []
             cpf = sheet[f'U{i}'].value # CPF
             if not cpf:
+                print('Funcionário sem cpf')
                 continue 
-            valores_func += [cpf] # CPF
-            valores_func += [sheet[f'A{i}'].value] # Nome
-            valores_func += [sheet[f'C{i}'].value] # Dias
-            valores_func += [sheet[f'E{i}'].value] # Salario Base
-            valores_func += [sheet[f'R{i}'].value] # Salario Total
-            valores_func += [sheet[f'G{i}'].value] # Adicional
-            valores_func += [0.] * 2 # Ad noturno - reserva
-            valores_func += [sheet[f'H{i}'].value] # Encargos
-            valores_func += [0.] # Insalubridade
-            valores_func += [sheet[f'F{i}'].value] # Periculosidade
-            valores_func += [0.] # Outros
-            valores_func += [sheet[f'K{i}'].value] # Vale Transporte
-            valores_func += [sheet[f'L{i}'].value] # Vale Refeicao
-            valores_func += [sheet[f'J{i}'].value] # Taxa
-            valores_func += [sheet[f'N{i}'].value] # Cesta
-            valores_func += [sheet[f'M{i}'].value] # Farda
-            valores_func += [0.] * 4
-            valores_func += [sheet[f'O{i}'].value] # Plano de saude
-            valores_func += [0.] * 2
-            valores_func += [sheet[f'P{i}'].value] # Tributos
-            valores_func += [0.] * 12
-
-            valores_func = [valor if bool(valor) and valores_func[4] != 0. else 0.
-                            for valor in valores_func]
-            
-            func = Func(*valores_func)
-            dados[func.cpf] = func
-
+            valores = {
+                'nome': sheet[f'A{i}'].value,
+                'cpf': cpf,
+                'dias': sheet[f'C{i}'].value,
+                'salario_base': sheet[f'E{i}'].value if not None else 0.,
+                'salario_total': sheet[f'R{i}'].value if not None else 0.,
+                'Valor Adicional': sheet[f'G{i}'].value if not None else 0.,
+                'Valor Adicional Noturno': 0.,
+                'Valor Reserva Técnica': 0.,
+                'Valor Encargos': sheet[f'H{i}'].value if not None else 0.,
+                'Valor Insalubridade': 0.,
+                'Valor Periculosidade': sheet[f'F{i}'].value if not None else 0.,
+                'Valor Outros': 0.,
+                'Valor Vale Transporte': sheet[f'K{i}'].value if not None else 0.,
+                'Valor Vale Refeição': sheet[f'L{i}'].value if not None else 0.,
+                'Valor Taxa': sheet[f'J{i}'].value if not None else 0.,
+                'Valor Cesta Basica': sheet[f'N{i}'].value if not None else 0.,
+                'Valor Farda': sheet[f'M{i}'].value if not None else 0.,
+                'Valor Munição': 0.,
+                'Valor Seguro Vida': 0.,
+                'Valor Supervisão': 0.,
+                'Valor Equipamento': 0.,
+                'Valor Plano Saúde': sheet[f'O{i}'].value if not None else 0.,
+                'Valor Intra jornada Diurno': 0.,
+                'Valor Intra jornada Noturno': 0.,
+                'Valor Tributos': sheet[f'P{i}'].value if not None else 0.,
+                'Valor Insumos de Mão de Obra': 0.,
+                'Quantidade Hora Extra': 0.,
+                'Valor Hora Extra': 0.,
+                'Valor DSR': 0.,
+                'Valor Extra Encargos': 0.,
+                'Valor Extra Taxa': 0.,
+                'Valor Extra Tributos': 0.,
+                'Quantidade Diarias': 0.,
+                'Valor Passagem': 0.,
+                'Valor Viagem': 0.,
+                'Valor Viagem Taxa': 0.,
+                'Valor Viagem Tributos': 0.
+            }
+            if valores['salario_total'] == 0:
+                valores = dict.fromkeys(valores, 0)
+                valores[cpf] = cpf
+            dados[cpf] = valores
         return dados
     
     

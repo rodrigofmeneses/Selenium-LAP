@@ -64,7 +64,7 @@ class FuncionarioFatura(Funcionario):
         self._clicar(self._loc_demais_informacoes)
         try:
             self.demais_informacoes = DemaisInformacoes(self.webdriver)
-        except exception:
+        except Exception:
             print('Problema com substituto')
 
     def _digitar_pagina_principal(self, locator, valor):
