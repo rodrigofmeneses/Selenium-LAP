@@ -33,24 +33,24 @@ class FuncionarioFatura(Funcionario):
     salario_total = None
     demais_informacoes = None
     
-    def __init__(self, webdriver, _loc_funcionario, dados=None):
+    def __init__(self, webdriver, _loc_funcionario):
         super().__init__(webdriver, _loc_funcionario)
         # Seletores
         self._loc_dias_trabalhados = (
             By.CSS_SELECTOR,
-            _loc_funcionario[1] + ' ' + 'td:nth-child(6) input'
+            _loc_funcionario[1] + ' td:nth-child(6) input'
         )
         self._loc_salario_base = (
             By.CSS_SELECTOR,
-            _loc_funcionario[1] + ' ' + 'td:nth-child(7) input'
+            _loc_funcionario[1] + ' td:nth-child(7) input'
         )
         self._loc_salario_total = (
             By.CSS_SELECTOR,
-            _loc_funcionario[1] + ' ' + 'td:nth-child(13) input'
+            _loc_funcionario[1] + ' td:nth-child(13) input'
         )
         self._loc_demais_informacoes = (
             By.CSS_SELECTOR,
-            _loc_funcionario[1] + ' ' + 'button'
+            _loc_funcionario[1] + ' button'
         )
         self._load_data()
 
@@ -77,9 +77,6 @@ class FuncionarioFatura(Funcionario):
         self.dias_trabalhados = self._load_atrib_value(self._loc_dias_trabalhados)
         self.salario_base = self._load_atrib_value(self._loc_salario_base)
         self.salario_total = self._load_atrib_value(self._loc_salario_total)
-
-    def __repr__(self):
-        return f'Funcionario(nome="{self.nome}", cpf="{self.cpf}")'
 
 
 class DemaisInformacoes(TypeAgent):
