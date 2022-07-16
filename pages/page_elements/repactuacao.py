@@ -3,13 +3,12 @@ from pages.page_elements.funcionario import Funcionario
 from selenium.webdriver.common.by import By
 
 class TerceirizadosRepactuacao(PageElement):
-    _loc_tabela_terceirizados = (By.CSS_SELECTOR, '#gridPrincipal > table > tbody')
-# div.table-responsive:nth-child(4) > table:nth-child(1) > tbody:nth-child(2)
+    # _loc_tabela_terceirizados = (By.CSS_SELECTOR, '#gridPrincipal > table > tbody')
+    _loc_tabela_terceirizados = (By.CSS_SELECTOR,'tbody > tr')
     funcionarios = []
 
-    def carregar_funcionarios(self, dados):
+    def carregar_funcionarios(self):
         self.funcionarios = self._listar_funcionarios_cadastrados()
-        self._atribuir_dados_funcionarios(dados)
 
     def _listar_funcionarios_cadastrados(self):
         num_funcs = len(self.find_elements(self._loc_tabela_terceirizados))
@@ -22,26 +21,21 @@ class TerceirizadosRepactuacao(PageElement):
             ))
         return funcs
 
-    def _atribuir_dados_funcionarios(self, dados):
-        for func in self.funcionarios:
-            if func.cpf in dados.keys():
-                    func.dados = dados[func.cpf]
-
 class FuncionarioRepactuacao(Funcionario):
     '''''' 
-    provisionamento = None
+    repactuacao = None
 
     def __init__(self, webdriver, _loc_funcionario):
         super().__init__(webdriver, _loc_funcionario)
         # Seletores
-        self._loc_provisionamento = (
+        self._loc_repactuacao = (
             By.CSS_SELECTOR,
             _loc_funcionario[1] + ' td:nth-child(7) input'
         )
         self._load_data()
     
-    def preencher_provisionamento(self, valor):
-        self._digitar_pagina_principal(self._loc_provisionamento, valor)
+    def preencher_repactuacao(self, valor):
+        self._digitar_pagina_principal(self._loc_repactuacao, valor)
     
     def _digitar_pagina_principal(self, locator, valor):
         self._digitar(locator, valor)
@@ -50,4 +44,4 @@ class FuncionarioRepactuacao(Funcionario):
         self._load_data()
     
     def _load_data(self):
-        self.provisionamento = self._load_atrib_value(self._loc_provisionamento)
+        self.repactuacao = self._load_atrib_value(self._loc_repactuacao)

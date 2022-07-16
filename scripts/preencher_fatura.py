@@ -94,37 +94,39 @@ class PreencherFatura():
 
         dados = {}
         for i in range(*intervalo_funcionarios):
-            cpf = sheet[f'U{i}'].value # CPF
+            cpf = sheet[f'T{i}'].value # CPF
             if not cpf:
                 print('Funcionário sem cpf')
                 continue 
             valores = {
                 'nome': sheet[f'A{i}'].value,
                 'cpf': cpf,
-                'dias': sheet[f'E{i}'].value,
-                'salario_base': sheet[f'F{i}'].value,
-                'salario_total': sheet[f'S{i}'].value,
+                'dias': 30.,
+                # 'dias': sheet[f'E{i}'].value,
+                'salario_base': sheet[f'D{i}'].value,
+                'salario_total': sheet[f'P{i}'].value,
                 'Valor Adicional': 0.,
-                'Valor Adicional Noturno': sheet[f'G{i}'].value,
+                'Valor Adicional Noturno': 0.,
+                # 'Valor Adicional Noturno': sheet[f'G{i}'].value,
                 'Valor Reserva Técnica': 0.,
-                'Valor Encargos': sheet[f'I{i}'].value,
+                'Valor Encargos': sheet[f'F{i}'].value,
                 'Valor Insalubridade': 0.,
-                'Valor Periculosidade': sheet[f'H{i}'].value,
+                'Valor Periculosidade': sheet[f'E{i}'].value,
                 'Valor Outros': 0.,
-                'Valor Vale Transporte': sheet[f'L{i}'].value,
-                'Valor Vale Refeição': sheet[f'M{i}'].value,
-                'Valor Taxa': sheet[f'K{i}'].value,
-                'Valor Cesta Basica': sheet[f'O{i}'].value,
-                'Valor Farda': sheet[f'N{i}'].value,
+                'Valor Vale Transporte': sheet[f'I{i}'].value,
+                'Valor Vale Refeição': sheet[f'J{i}'].value,
+                'Valor Taxa': sheet[f'H{i}'].value,
+                'Valor Cesta Basica': sheet[f'K{i}'].value,
+                'Valor Farda': sheet[f'L{i}'].value,
                 'Valor Munição': 0.,
                 'Valor Seguro Vida': 0.,
                 'Valor Supervisão': 0.,
                 'Valor Equipamento': 0.,
-                'Valor Plano Saúde': sheet[f'P{i}'].value,
+                'Valor Plano Saúde': sheet[f'N{i}'].value,
                 'Valor Intra jornada Diurno': 0.,
                 'Valor Intra jornada Noturno': 0.,
-                'Valor Tributos': sheet[f'Q{i}'].value,
-                'Valor Insumos de Mão de Obra': 0.,
+                'Valor Tributos': sheet[f'M{i}'].value,
+                'Valor Insumos de Mão de Obra': 0.
                 # 'Quantidade Hora Extra': 0.,
                 # 'Valor Hora Extra': 0.,
                 # 'Valor DSR': 0.,
@@ -143,7 +145,7 @@ class PreencherFatura():
                 if not valor:
                     valores[chave] = 0.
             
-            if valores['salario_total'] == 0:
+            if valores['salario_total'] == 0.:
                 valores = dict.fromkeys(valores, 0)
                 valores['cpf'] = cpf
             dados[cpf] = valores
