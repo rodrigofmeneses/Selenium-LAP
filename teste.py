@@ -1,7 +1,7 @@
 from selenium.webdriver import Firefox
 # from pages.pages import PageLogin, PageGuardiao, PageSPG, PageFatura
 from scripts.inicializar import Inicializar
-from scripts.preencher import Preencher
+from scripts.preencher_fatura import PreencherFatura
 
 # Provisórios
 from time import sleep
@@ -16,4 +16,11 @@ pagina = Inicializar(
     'credenciais.txt'
 ).run()
 
-# Preencher(browser, 'data/SPS-10-2021.xls', intervalo=(11, 23)).run()
+p = PreencherFatura(
+    browser, 
+    'data/SSPDS 009 (06-2022).xlsx', 
+    intervalo_funcionarios=(15, 103), 
+    nome_planilha='SPG' 
+)
+
+p.run()

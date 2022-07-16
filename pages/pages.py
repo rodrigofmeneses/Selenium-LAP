@@ -2,7 +2,8 @@ from page_objects import Page
 from pages.page_elements.login import Login
 from pages.page_elements.guardiao import Planejamento
 from pages.page_elements.spg import MenuSuperior, MenuLateral, Avisos
-from pages.page_elements.fatura import Terceirizados
+from pages.page_elements.fatura import TerceirizadosFatura
+from pages.page_elements.repactuacao import TerceirizadosRepactuacao
 
 
 class PageLogin(Page):
@@ -20,4 +21,8 @@ class PageSPG(Page):
 
 
 class PageFatura(Page):
-    terceirizados = Terceirizados()
+    terceirizados = TerceirizadosFatura()
+
+
+class PageRepactuacao(Page):
+    terceirizados = TerceirizadosRepactuacao()
