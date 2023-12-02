@@ -5,7 +5,7 @@ from selenium.webdriver.support import expected_conditions
 
 
 class Planejamento(PageElement):
-    spg_button = (By.ID, 'glo-elementblock-0')
+    spg_button = (By.ID, "glo-elementblock-0")
 
     def acessar_spg(self):
         try:

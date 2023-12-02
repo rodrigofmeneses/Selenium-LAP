@@ -2,7 +2,7 @@ from pages.pages import PageLogin, PageGuardiao, PageSPG, PageFatura
 from selenium.webdriver import Firefox
 
 
-class Inicializar():
+class Inicializar:
     pagina = None
 
     def __init__(self, webdriver, url, credenciais):
@@ -15,16 +15,16 @@ class Inicializar():
         self._guardiao()
         self._spg()
         return PageFatura(self.webdriver)
-        
+
     def _login(self):
         self.pagina = PageLogin(self.webdriver, self.url)
         self.pagina.open()
         self.pagina.login.logar(self.credenciais)
-    
+
     def _guardiao(self):
         self.pagina = PageGuardiao(self.webdriver)
         self.pagina.planejamento.acessar_spg()
-    
+
     def _spg(self):
         self.pagina = PageSPG(self.webdriver)
         self.pagina.menu_superior.clicar_sister()
@@ -32,11 +32,10 @@ class Inicializar():
         self.pagina.menu_lateral.clicar_fatura()
         self.pagina.menu_lateral.clicar_controle_de_fatura()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     browser = Firefox()
 
     pagina = Inicializar(
-        browser,
-        'https://guardiaov4.seplag.ce.gov.br/auth',
-        'credenciais.txt'
+        browser, "https://guardiaov4.seplag.ce.gov.br/auth", "credenciais.txt"
     ).run()

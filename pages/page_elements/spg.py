@@ -6,8 +6,11 @@ from time import sleep
 
 
 class MenuSuperior(PageElement):
-    sister_button = (By.CSS_SELECTOR, 'li.menu-topo:nth-child(5) > a:nth-child(1)')
-    
+    sister_button = (
+        By.CSS_SELECTOR,
+        "li.menu-topo:nth-child(5) > a:nth-child(1)",
+    )
+
     def clicar_sister(self):
         try:
             WebDriverWait(self.webdriver, 10).until(
@@ -22,30 +25,30 @@ class MenuSuperior(PageElement):
 
 class MenuLateral(PageElement):
     fatura_button = (
-        By.CSS_SELECTOR, 
-        '.navi > ul:nth-child(1) > li:nth-child(6) > a:nth-child(1)'
+        By.CSS_SELECTOR,
+        ".navi > ul:nth-child(1) > li:nth-child(6) > a:nth-child(1)",
     )
     controle_de_fatura_button = (
-        By.CSS_SELECTOR, 
-        'li.active:nth-child(6) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)'
+        By.CSS_SELECTOR,
+        "li.active:nth-child(6) > ul:nth-child(2) > li:nth-child(1) > a:nth-child(1)",
     )
 
     def clicar_fatura(self):
         self._clicar(self.fatura_button)
-    
+
     def clicar_controle_de_fatura(self):
         self._clicar(self.controle_de_fatura_button)
 
 
 class Avisos(PageElement):
-    close_button = (By.CSS_SELECTOR, 'button.close')
+    close_button = (By.CSS_SELECTOR, "button.close")
 
     def fechar_avisos(self):
         sleep(2)
         num_avisos = len(self.find_elements(self.close_button))
         for _ in range(num_avisos):
             for button in self.find_elements(self.close_button):
-                try: 
+                try:
                     button.click()
                 except:
                     ...

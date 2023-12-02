@@ -7,16 +7,17 @@ class SeleniumObject:
 
     def find_elements(self, locator):
         return self.webdriver.find_elements(*locator)
-    
+
     def _clicar(self, locator):
         self.webdriver.find_element(*locator).click()
 
+
 class Page(ABC, SeleniumObject):
-    def __init__(self, webdriver, url=''):
+    def __init__(self, webdriver, url=""):
         self.webdriver = webdriver
         self.url = url
         self._reflection()
-    
+
     def open(self):
         self.webdriver.get(self.url)
 
